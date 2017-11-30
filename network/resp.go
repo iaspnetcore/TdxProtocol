@@ -915,8 +915,6 @@ func NewRespParser(data []byte) *RespParser {
 	return &RespParser{RawBuffer: data}
 }
 
-
-
 func ReadResp(conn net.Conn) (error, []byte) {
 	header := make([]byte, RESP_HEADER_LEN)
 	nRead := 0
@@ -944,11 +942,10 @@ func ReadResp(conn net.Conn) (error, []byte) {
 	}
 
 	length := int(binary.LittleEndian.Uint16(header[12:14]))
-	fmt.Println(hex.EncodeToString(header), length)
 	result := make([]byte, length + RESP_HEADER_LEN)
 	copy(result[:RESP_HEADER_LEN], header[:])
 
-	for nRead < length {
+	for nRead < length + RESP_HEADER_LEN {
 		n, err := conn.Read(result[nRead:])
 		if err != nil {
 			log.Errorf("ReadResp - read data fail, error: %v", err)
