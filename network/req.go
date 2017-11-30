@@ -8,6 +8,7 @@ import (
 const (
 	CMD_INFO_EX = 0x000f
 	CMD_FINANCE = 0x0010
+	CMD_NAMES = 0x0450
 	CMD_BID = 0x0526
 	CMD_PERIOD_DATA = 0x052d
 	CMD_INSTANT_TRANS = 0x0fc5
@@ -57,6 +58,12 @@ func (this Header) GetCmd() uint16 {
 type StockDef struct {
 	MarketLocation 	byte
 	StockCode string
+}
+
+type NamesReq struct {
+	Header
+	Block uint16
+	Offset uint16
 }
 
 type InfoExReq struct {
@@ -409,6 +416,36 @@ func NewPeriodDataReq(seqId uint32, stockCode string, period uint16, offset uint
 		0,
 		0,
 		0,
+	}
+
+	req.Header.Len = req.Size()
+	req.Header.Len1 = req.Header.Len
+
+	return req
+}
+
+func (this *NamesReq) Write(writer *bytes.Buffer) {
+	this.Header.Write(writer)
+	writeUInt16(writer, this.Block)
+	writeUInt16(writer, this.Offset)
+}
+
+func (this *NamesReq) Size() uint16 {
+	return 6
+}
+
+func NewNamesReq(seqId uint32, block uint16, offset uint16) *NamesReq {
+	req := &NamesReq{
+		Header{
+			Zip: 0xc,
+			SeqId: seqId,
+			PacketType: 0x1,
+			Len: 0,
+			Len1: 0,
+			Cmd: CMD_NAMES,
+		},
+		block,
+		offset,
 	}
 
 	req.Header.Len = req.Size()

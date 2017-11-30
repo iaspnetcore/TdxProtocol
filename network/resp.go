@@ -155,6 +155,11 @@ type InfoExParser struct {
 	Req *InfoExReq
 }
 
+type NamesParser struct {
+	RespParser
+	Req Request
+}
+
 type FinanceParser struct {
 	RespParser
 	Req *FinanceReq
@@ -873,9 +878,44 @@ func (this *GetFileDataParser) Parse() (err error, length uint32, data []byte) {
 	return
 }
 
+func NewNamesParser(req Request, data []byte) *NamesParser {
+	return &NamesParser{
+		RespParser: RespParser{
+			RawBuffer: data,
+		},
+		Req: req,
+	}
+}
+
+func (this *NamesParser) Parse() (err error, length uint16, data []byte) {
+	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
+		err = errors.New("incomplete data")
+		return
+	}
+
+	if this.getSeqId() != this.Req.GetSeqId() {
+		err = errors.New("bad seq id")
+		return
+	}
+
+	if this.getCmd() != this.Req.GetCmd() {
+		err = errors.New("bad cmd")
+		return
+	}
+
+	this.uncompressIf()
+
+	length = binary.LittleEndian.Uint16(this.Data[:2])
+	data = this.Data[2:]
+
+	return
+}
+
 func NewRespParser(data []byte) *RespParser {
 	return &RespParser{RawBuffer: data}
 }
+
+
 
 func ReadResp(conn net.Conn) (error, []byte) {
 	header := make([]byte, RESP_HEADER_LEN)
@@ -889,9 +929,22 @@ func ReadResp(conn net.Conn) (error, []byte) {
 			log.Infof("ReadResp - read header success, n: %d", n)
 		}
 		nRead += n
+
+		// Find magic number
+		var i int
+		for i < nRead - 4 {
+			if header[i] != 0xb1 && header[i+1] != 0xeb && header[i+2] != 0x74 && header[i+3] != 00 {
+				i++
+			} else {
+				break
+			}
+		}
+		copy(header[0:nRead-i], header[i:nRead])
+		nRead -= i
 	}
 
 	length := int(binary.LittleEndian.Uint16(header[12:14]))
+	fmt.Println(hex.EncodeToString(header), length)
 	result := make([]byte, length + RESP_HEADER_LEN)
 	copy(result[:RESP_HEADER_LEN], header[:])
 

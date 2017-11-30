@@ -357,6 +357,68 @@ var _ = Describe("TestGetFileDataReq", func() {
 	})
 })
 
+var _ = Describe("TestNamesReq", func () {
+	var sendReq = func (conn net.Conn, reqHex string) {
+		reqData, _ := hex.DecodeString(reqHex)
+
+		util.DumpBytes(reqData)
+		_, err := conn.Write(reqData)
+		chk(err)
+
+		err, buffer := network.ReadResp(conn)
+		chk(err)
+
+		parser := network.NewRespParser(buffer)
+		parser.Parse()
+
+		fmt.Printf("data len: %d\n", len(parser.Data))
+		util.DumpBytes(parser.Data)
+	}
+
+	BuildBuffer := func(seqId uint32, offset uint16) (*bytes.Buffer, *network.NamesReq) {
+		req := network.NewNamesReq(seqId, 0, offset)
+		buf := new(bytes.Buffer)
+		req.Write(buf)
+		return buf, req
+	}
+
+	It("test", func() {
+		conn, err := net.Dial("tcp", HOST)
+		chk(err)
+		defer conn.Close()
+
+		sendReq(conn, "0c0218940001030003000d0001")
+		sendReq(conn, "0c031899000120002000db0fb3a4bdadd6a4c8af0000009a993141090000000000000000000000000003")
+
+		var fileData []byte
+
+		var offset uint32 = 0
+		var count uint32 = 1000
+		var seqId uint32 = 1
+
+		for offset < 0x1c3b {
+			buf, req := BuildBuffer(seqId, uint16(offset))
+			_, err = conn.Write(buf.Bytes())
+			chk(err)
+
+			err, buffer := network.ReadResp(conn)
+			chk(err)
+
+			parser := network.NewNamesParser(req, buffer)
+			_, packetLength, data := parser.Parse()
+			fmt.Println("packetLength:", packetLength)
+
+			fileData = append(fileData, data...)
+
+			offset += count
+		}
+
+		filePath := filepath.Join("temp", "sz-names.dat")
+		os.MkdirAll(filepath.Dir(filePath), 0777)
+		ioutil.WriteFile(filePath, fileData, 0666)
+	})
+})
+
 var _ = Describe("TestReqData", func () {
 	It("test", func() {
 		reqHex := "0c57086401011c001c002d050000333030313732040001000100180100000000000000000000"
@@ -404,7 +466,7 @@ var _ = Describe("TestCmd06b9", func () {
 
 var _ = Describe("TestCmd000d", func () {
 	It("test", func() {
-		reqHex := "0cdd032900020f000f002605010000303030303031f3360200"
+		reqHex := "0c19186d000106000600500400000000"
 		reqData, _ := hex.DecodeString(reqHex)
 
 		fmt.Println("")
@@ -439,6 +501,9 @@ var _ = Describe("TestCmd0450", func () {
 	var sendReq = func (conn net.Conn, reqHex string) {
 		reqData, _ := hex.DecodeString(reqHex)
 
+		fmt.Println("\n========================================")
+
+		util.DumpBytes(reqData)
 		_, err := conn.Write(reqData)
 		chk(err)
 
@@ -449,7 +514,7 @@ var _ = Describe("TestCmd0450", func () {
 		parser.Parse()
 
 		fmt.Printf("data len: %d\n", len(parser.Data))
-		fmt.Println(hex.EncodeToString(parser.Data))
+		util.DumpBytes(parser.Data)
 	}
 
 	It("test", func() {
@@ -457,15 +522,15 @@ var _ = Describe("TestCmd0450", func () {
 		chk(err)
 		defer conn.Close()
 
-		sendReq(conn, "0c01187b00011a011a010b0048e1d86490e8728cdd0188730982f4e1749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357614dfecb8146951fbaf69b07b20bc100749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae2770035748e1d86490e8728cdd0188730982f4e1749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357")
+		//sendReq(conn, "0c01187b00011a011a010b0048e1d86490e8728cdd0188730982f4e1749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357614dfecb8146951fbaf69b07b20bc100749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae2770035748e1d86490e8728cdd0188730982f4e1749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357749933ae27700357")
 		sendReq(conn, "0c0218940001030003000d0001")
 		sendReq(conn, "0c031899000120002000db0fb3a4bdadd6a4c8af0000009a993141090000000000000000000000000003")
-		sendReq(conn, "0c1618930001380038000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") // 0a
+		//sendReq(conn, "0c1518950001020002000200")
+		//sendReq(conn, "0c1618930001380038000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") // 0a
 
-		sendReq(conn, "0c1518950001020002000200")
-		sendReq(conn, "0c17186f000102000200de0f")
-		sendReq(conn, "0c21186c0001080008004e0401007ac93301")
-		sendReq(conn, "0c22186e000106000600500401000000")
+		//sendReq(conn, "0c17186f000102000200de0f")
+		//sendReq(conn, "0c18186b0001080008004e0400007ac93301")
+		sendReq(conn, "0c30186d000106000600500401000000")
 	})
 })
 
