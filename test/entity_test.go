@@ -290,15 +290,15 @@ var _ = Describe("TestPeriodHisDataReq", func() {
 
 		parser := network.NewPeriodHisDataParser(req, buffer)
 		_, data := parser.Parse()
-		util.Assert(len(data) % tdxdatasource.TDX_RECORD_SIZSE == 0, "")
+		util.Assert(len(data) % tdxdatasource.TDX_RECORD_SIZE == 0, "")
 
 		util.DumpBytes(data)
 
 		_, p := period.PeriodFromString("D1")
 
 		var r tdxdatasource.TDXRecord
-		for i := 0; i < len(data); i+=tdxdatasource.TDX_RECORD_SIZSE {
-			rb := data[i:i+tdxdatasource.TDX_RECORD_SIZSE]
+		for i := 0; i < len(data); i+=tdxdatasource.TDX_RECORD_SIZE {
+			rb := data[i:i+tdxdatasource.TDX_RECORD_SIZE]
 			tdxdatasource.TDXRecordFromBytes(p, rb, &r)
 			fmt.Printf("%+v\n", r)
 		}

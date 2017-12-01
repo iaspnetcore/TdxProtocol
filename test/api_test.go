@@ -58,8 +58,8 @@ var _ = Describe("GetPeriodHisData", func () {
 		_, p := period.PeriodFromString("D1")
 
 		var r tdxdatasource.TDXRecord
-		for i := 0; i < len(data); i+=tdxdatasource.TDX_RECORD_SIZSE {
-			rb := data[i:i+tdxdatasource.TDX_RECORD_SIZSE]
+		for i := 0; i < len(data); i+=tdxdatasource.TDX_RECORD_SIZE {
+			rb := data[i:i+tdxdatasource.TDX_RECORD_SIZE]
 			tdxdatasource.TDXRecordFromBytes(p, rb, &r)
 			fmt.Printf("%+v\n", r)
 		}
