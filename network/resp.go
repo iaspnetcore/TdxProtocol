@@ -142,17 +142,17 @@ type RespParser struct {
 
 type InstantTransParser struct {
 	RespParser
-	Req *InstantTransReq
+	Req Request
 }
 
 type HisTransParser struct {
 	RespParser
-	Req *HisTransReq
+	Req Request
 }
 
 type InfoExParser struct {
 	RespParser
-	Req *InfoExReq
+	Req Request
 }
 
 type NamesParser struct {
@@ -167,7 +167,7 @@ type NamesLenParser struct {
 
 type FinanceParser struct {
 	RespParser
-	Req *FinanceReq
+	Req Request
 }
 
 type BidParser struct {
@@ -178,17 +178,17 @@ type BidParser struct {
 
 type PeriodDataParser struct {
 	RespParser
-	Req *PeriodDataReq
+	Req Request
 }
 
 type GetFileLenParser struct {
 	RespParser
-	Req *GetFileLenReq
+	Req Request
 }
 
 type GetFileDataParser struct {
 	RespParser
-	Req *GetFileDataReq
+	Req Request
 }
 
 func (this *Record) MinuteString() string {
@@ -408,11 +408,11 @@ func (this *InstantTransParser) Parse() (error, []*Transaction) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -445,7 +445,7 @@ func (this *InstantTransParser) Parse() (error, []*Transaction) {
 	return nil, result
 }
 
-func NewInstantTransParser(req *InstantTransReq, data []byte) *InstantTransParser {
+func NewInstantTransParser(req Request, data []byte) *InstantTransParser {
 	return &InstantTransParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -459,11 +459,11 @@ func (this *HisTransParser) Parse() (error, []*Transaction) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -478,7 +478,7 @@ func (this *HisTransParser) Parse() (error, []*Transaction) {
 	var priceBase int
 
 	for ; count > 0; count-- {
-		trans := &Transaction{Date: this.Req.Date}
+		trans := &Transaction{Date: this.Req.(*HisTransReq).Date}
 		trans.Minute = this.getUint16()
 		if first {
 			priceBase = this.parseData2()
@@ -496,7 +496,7 @@ func (this *HisTransParser) Parse() (error, []*Transaction) {
 	return nil, result
 }
 
-func NewHisTransParser(req *HisTransReq, data []byte) *HisTransParser {
+func NewHisTransParser(req Request, data []byte) *HisTransParser {
 	return &HisTransParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -510,11 +510,11 @@ func (this *InfoExParser) Parse() (error, map[string][]*InfoExItem) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -560,7 +560,7 @@ func (this *InfoExParser) Parse() (error, map[string][]*InfoExItem) {
 	return nil, result
 }
 
-func NewInfoExParser(req *InfoExReq, data []byte) *InfoExParser {
+func NewInfoExParser(req Request, data []byte) *InfoExParser {
 	return &InfoExParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -569,7 +569,7 @@ func NewInfoExParser(req *InfoExReq, data []byte) *InfoExParser {
 	}
 }
 
-func NewFinanceParser(req *FinanceReq, data []byte) *FinanceParser {
+func NewFinanceParser(req Request, data []byte) *FinanceParser {
 	return &FinanceParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -584,12 +584,12 @@ func (this *FinanceParser) Parse() (err error, finances map[string]*Finance) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -763,7 +763,7 @@ func NewStockListParser(req Request, data []byte) *BidParser {
 	}
 }
 
-func NewPeriodDataParser(req *PeriodDataReq, data []byte) *PeriodDataParser {
+func NewPeriodDataParser(req Request, data []byte) *PeriodDataParser {
 	return &PeriodDataParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -777,11 +777,11 @@ func (this *PeriodDataParser) Parse() (error, []*Record) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -818,7 +818,7 @@ func (this *PeriodDataParser) Parse() (error, []*Record) {
 	return nil, result
 }
 
-func NewGetFileLenParser(req *GetFileLenReq, data []byte) *GetFileLenParser {
+func NewGetFileLenParser(req Request, data []byte) *GetFileLenParser {
 	return &GetFileLenParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -833,12 +833,12 @@ func (this *GetFileLenParser) Parse() (err error, length uint32) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -850,7 +850,7 @@ func (this *GetFileLenParser) Parse() (err error, length uint32) {
 	return
 }
 
-func NewGetFileDataParser(req *GetFileDataReq, data []byte) *GetFileDataParser {
+func NewGetFileDataParser(req Request, data []byte) *GetFileDataParser {
 	return &GetFileDataParser{
 		RespParser: RespParser{
 			RawBuffer: data,
@@ -865,12 +865,12 @@ func (this *GetFileDataParser) Parse() (err error, length uint32, data []byte) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.Header.SeqId {
+	if this.getSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.Header.Cmd {
+	if this.getCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
