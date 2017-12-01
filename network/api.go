@@ -174,6 +174,20 @@ func (this *API) GetPeriodData(code string, period, offset, count uint16) (error
 	return parser.Parse()
 }
 
+func (this *API) GetPeriodHisData(code string, period uint16, startDate, EndDate uint32) (error, []byte) {
+	req := NewPeriodHisDataReq(this.nextSeqId(), code, period, startDate, EndDate)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, nil
+	}
+
+	parser := NewPeriodHisDataParser(req, respData)
+	return parser.Parse()
+}
+
 func (this *API) GetFileLength(fileName string) (error, uint32) {
 	req := NewGetFileLenReq(this.nextSeqId(), fileName)
 	buf := new(bytes.Buffer)

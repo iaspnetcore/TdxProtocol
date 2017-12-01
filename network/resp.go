@@ -181,6 +181,11 @@ type PeriodDataParser struct {
 	Req Request
 }
 
+type PeriodHisDataParser struct {
+	RespParser
+	Req Request
+}
+
 type GetFileLenParser struct {
 	RespParser
 	Req Request
@@ -816,6 +821,33 @@ func (this *PeriodDataParser) Parse() (error, []*Record) {
 	}
 
 	return nil, result
+}
+
+func NewPeriodHisDataParser(req Request, data []byte) *PeriodHisDataParser {
+	return &PeriodHisDataParser{
+		RespParser: RespParser{
+			RawBuffer: data,
+		},
+		Req: req,
+	}
+}
+
+func (this *PeriodHisDataParser) Parse() (error, []byte) {
+	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
+		return errors.New("incomplete data"), nil
+	}
+
+	if this.getSeqId() != this.Req.GetSeqId() {
+		return errors.New("bad seq id"), nil
+	}
+
+	if this.getCmd() != this.Req.GetCmd() {
+		return errors.New("bad cmd"), nil
+	}
+
+	this.uncompressIf()
+
+	return nil, this.Data[6:]
 }
 
 func NewGetFileLenParser(req Request, data []byte) *GetFileLenParser {

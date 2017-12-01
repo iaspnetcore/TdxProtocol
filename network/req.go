@@ -14,6 +14,7 @@ const (
 	CMD_BID = 0x0526
 	CMD_PERIOD_DATA = 0x052d
 	CMD_INSTANT_TRANS = 0x0fc5
+	CMD_PERIOD_HIS_DATA = 0x0fcd
 	CMD_HIS_TRANS = 0x0fb5
 	CMD_HEART_BEAT = 0x0523
 
@@ -120,6 +121,15 @@ type PeriodDataReq struct {
 	Unknown2 uint32			// 0
 	Unknown3 uint32			// 0
 	Unknown4 uint16			// 0
+}
+
+type PeriodHisDataReq struct {
+	Header
+	Location uint16
+	StockCode string
+	StartDate uint32
+	EndDate uint32
+	Period uint16
 }
 
 type GetFileLenReq struct {
@@ -423,6 +433,42 @@ func NewPeriodDataReq(seqId uint32, stockCode string, period uint16, offset uint
 		0,
 		0,
 		0,
+	}
+
+	req.Header.Len = req.Size()
+	req.Header.Len1 = req.Header.Len
+
+	return req
+}
+
+func (this *PeriodHisDataReq) Write(writer *bytes.Buffer) {
+	this.Header.Write(writer)
+	writeUInt16(writer, this.Location)
+	writer.Write([]byte(this.StockCode))
+	writeUInt32(writer, this.StartDate)
+	writeUInt32(writer, this.EndDate)
+	writeUInt16(writer, this.Period)
+}
+
+func (this *PeriodHisDataReq) Size() uint16 {
+	return 20
+}
+
+func NewPeriodHisDataReq(seqId uint32, stockCode string, period uint16, startDate uint32, endDate uint32) *PeriodHisDataReq {
+	req := &PeriodHisDataReq{
+		Header{
+			Zip: 0xc,
+			SeqId: seqId,
+			PacketType: 0x1,
+			Len: 0,
+			Len1: 0,
+			Cmd: CMD_PERIOD_HIS_DATA,
+		},
+		uint16(MarketLocationFromCode(stockCode)),
+		stockCode,
+		startDate,
+		endDate,
+		period,
 	}
 
 	req.Header.Len = req.Size()

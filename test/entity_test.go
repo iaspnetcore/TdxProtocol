@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"strings"
 	"github.com/stephenlyu/TdxProtocol/util"
+	"github.com/stephenlyu/tds/datasource/tdx"
+	"github.com/stephenlyu/tds/period"
 )
 
 const (
@@ -256,6 +258,49 @@ var _ = Describe("TestPeriodDataReq", func() {
 		fmt.Println("record count: ", len(result))
 		for _, t := range result {
 			fmt.Println(t)
+		}
+	})
+})
+
+func BuildPeriodHisDataBuffer() (*bytes.Buffer, *network.PeriodHisDataReq) {
+	req := network.NewPeriodHisDataReq(1, "600000", network.PERIOD_DAY, 20170703, 20170705)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+	return buf, req
+}
+
+var _ = Describe("TestPeriodHisDataReq", func() {
+	It("test", func() {
+		fmt.Println("TestPeriodHisDataReq...")
+		buf, req := BuildPeriodHisDataBuffer()
+
+		util.DumpBytes(buf.Bytes())
+
+		start := time.Now().UnixNano()
+		conn, err := net.Dial("tcp", HOST)
+		chk(err)
+		defer conn.Close()
+
+		_, err = conn.Write(buf.Bytes())
+		chk(err)
+
+		err, buffer := network.ReadResp(conn)
+		chk(err)
+		fmt.Println("time cost: ", time.Now().UnixNano() - start)
+
+		parser := network.NewPeriodHisDataParser(req, buffer)
+		_, data := parser.Parse()
+		util.Assert(len(data) % tdxdatasource.TDX_RECORD_SIZSE == 0, "")
+
+		util.DumpBytes(data)
+
+		_, p := period.PeriodFromString("D1")
+
+		var r tdxdatasource.TDXRecord
+		for i := 0; i < len(data); i+=tdxdatasource.TDX_RECORD_SIZSE {
+			rb := data[i:i+tdxdatasource.TDX_RECORD_SIZSE]
+			tdxdatasource.TDXRecordFromBytes(p, rb, &r)
+			fmt.Printf("%+v\n", r)
 		}
 	})
 })
@@ -504,7 +549,7 @@ var _ = Describe("TestCmd06b9", func () {
 
 var _ = Describe("TestCmd000d", func () {
 	It("test", func() {
-		reqHex := "0c18186b0001080008004e0401007ac93301"
+		reqHex := "0c333a87000114001400cd0f0000303032303637cfc733017ac933010400"
 		reqData, _ := hex.DecodeString(reqHex)
 
 		fmt.Println("")
@@ -524,10 +569,6 @@ var _ = Describe("TestCmd000d", func () {
 		parser.Parse()
 
 		fmt.Printf("data len: %d\n", len(parser.Data))
-
-		//for i, b := range parser.Data {
-		//	parser.Data[i] = b ^ 57
-		//}
 
 		parser.TryParse()
 
