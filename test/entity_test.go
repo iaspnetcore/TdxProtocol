@@ -549,7 +549,7 @@ var _ = Describe("TestCmd06b9", func () {
 
 var _ = Describe("TestCmd000d", func () {
 	It("test", func() {
-		reqHex := "0c333a87000114001400cd0f0000303032303637cfc733017ac933010400"
+		reqHex := "0c333a87000114001400cd0f00003030323036377ac933017ac933010000"
 		reqData, _ := hex.DecodeString(reqHex)
 
 		fmt.Println("")

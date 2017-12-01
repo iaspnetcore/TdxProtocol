@@ -547,7 +547,8 @@ func (this *InfoExParser) Parse() (error, map[string][]*InfoExItem) {
 			date := this.getUint32()
 			tp := this.getByte()
 			if tp != 1 {
-				//fmt.Println("tp:", tp, "date:", date, "data:", hex.EncodeToString(this.Data[this.Current:this.Current+16]))
+				//f1, f2, f3, f4 := this.getFloat32(), this.getFloat32(), this.getFloat32(), this.getFloat32()
+				//fmt.Println("tp:", tp, "date:", date, f1, f2, f3, f4)
 				this.skipByte(16)
 				continue
 			}

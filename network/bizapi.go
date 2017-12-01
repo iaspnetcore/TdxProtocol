@@ -10,6 +10,8 @@ import (
 	"github.com/stephenlyu/tds/datasource/tdx"
 	"github.com/stephenlyu/tds/util"
 	"github.com/stephenlyu/tds/date"
+	. "github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/entity"
 )
 
 var blockExchangeMap = map[uint16]string{
@@ -307,4 +309,83 @@ func (this *BizApi) DownloadNamesData(blocks []uint16, filePath string) error {
 
 func (this *BizApi) DownloadAStockNamesData(filePath string) error {
 	return this.DownloadNamesData([]uint16{0, 1}, filePath)
+}
+
+func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
+	if startDate == 0 {
+		startDate = 19900101
+	}
+
+	if endDate == 0 {
+		endDate = uint32(date.GetTodayInt())
+	}
+
+	// Calculate all days for segmentation
+	startTs := tdxdatasource.DayDateToTimestamp(startDate)
+	endTs := tdxdatasource.DayDateToTimestamp(endDate)
+	const dayMillis = 24 * 60 * 60 * 1000
+	nDays := (endTs - startTs) / dayMillis + 1
+	days := make([]uint32, nDays)
+	for i, ts := 0, startTs; ts <= endTs; i, ts = i+1, ts+dayMillis {
+		days[i] = tdxdatasource.TimestampToDayDate(ts)
+	}
+
+	var step int
+	var uPeriod uint16
+	pName := period.ShortName()
+	switch {
+	case pName == "M1":
+		step = 1
+		uPeriod = PERIOD_MINUTE
+	case pName == "M5":
+		step = 1
+		uPeriod = PERIOD_MINUTE5
+	case pName == "D1":
+		step = 100
+		uPeriod = PERIOD_DAY
+	default:
+		return errors.New("bad period")
+	}
+
+	var getPacket = func(from, to uint32) (err error, data []byte) {
+		retryTimes := 0
+		for retryTimes < 3 {
+			err, data = this.api.GetPeriodHisData(security.Code, uPeriod, from, to)
+			if err == nil {
+				return
+			}
+			time.Sleep(time.Millisecond * 500)
+			retryTimes++
+		}
+		return
+	}
+
+	// Get data now
+	ds := tdxdatasource.NewDataSource(this.workDir, true)
+
+	for i := 0; i < len(days); i += step {
+		from := days[i]
+		var to uint32
+		if i + step > len(days) {
+			to = endDate
+		} else {
+			to = days[i + step - 1]
+		}
+
+		err, data := getPacket(from, to)
+		if err != nil {
+			return err
+		}
+
+		if len(data) == 0 {
+			continue
+		}
+
+		err = ds.AppendRawData(security, period, data)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

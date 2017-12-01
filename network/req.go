@@ -32,6 +32,7 @@ const (
 )
 
 const (
+	PERIOD_MINUTE5 = 0x0000
 	PERIOD_DAY = 0x0004
 	PERIOD_MINUTE = 0x0007
 )

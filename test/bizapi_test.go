@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"sort"
 	"time"
+	"github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/datasource/tdx"
+	"os"
 )
 
 var _ = Describe("BizApiGetSZStockCodes", func () {
@@ -193,5 +197,84 @@ var _ = Describe("BizApiGetNameData", func () {
 		err = api.DownloadAStockNamesData("tmp/names.dat")
 		chk(err)
 		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+	})
+})
+
+var _ = Describe("BizApiDownloadDayHisData", func () {
+	It("test", func() {
+		fmt.Println("test download day his data data...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		chk(err)
+		defer api.Cleanup()
+
+		security, _ := entity.ParseSecurity("000001.SZ")
+		_, dp := period.PeriodFromString("D1")
+
+		os.RemoveAll("temp")
+
+		api.SetWorkDir("temp")
+		start := time.Now().UnixNano()
+		err = api.DownloadPeriodHisData(security, dp,  0, 0)
+		chk(err)
+		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+
+		ds := tdxdatasource.NewDataSource("temp", true)
+		err, records := ds.GetData(security, dp)
+		chk(err)
+		fmt.Printf("record count: %d\n", len(records))
+	})
+})
+
+var _ = Describe("BizApiDownloadM5HisData", func () {
+	It("test", func() {
+		fmt.Println("test download 5 minute his data data...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		chk(err)
+		defer api.Cleanup()
+
+		security, _ := entity.ParseSecurity("000001.SZ")
+		_, dp := period.PeriodFromString("M5")
+
+		os.RemoveAll("temp")
+
+		api.SetWorkDir("temp")
+		start := time.Now().UnixNano()
+		err = api.DownloadPeriodHisData(security, dp,  20170101, 0)
+		chk(err)
+		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+
+		ds := tdxdatasource.NewDataSource("temp", true)
+		err, records := ds.GetData(security, dp)
+		chk(err)
+		fmt.Printf("record count: %d\n", len(records))
+		fmt.Printf("%+v\n", records[0].String())
+		fmt.Printf("%+v\n", records[len(records) - 1].String())
+	})
+})
+
+var _ = Describe("BizApiDownloadM1HisData", func () {
+	It("test", func() {
+		fmt.Println("test download 1 minute his data data...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		chk(err)
+		defer api.Cleanup()
+
+		security, _ := entity.ParseSecurity("000001.SZ")
+		_, dp := period.PeriodFromString("M1")
+
+		os.RemoveAll("temp")
+
+		api.SetWorkDir("temp")
+		start := time.Now().UnixNano()
+		err = api.DownloadPeriodHisData(security, dp,  20171101, 0)
+		chk(err)
+		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+
+		ds := tdxdatasource.NewDataSource("temp", true)
+		err, records := ds.GetData(security, dp)
+		chk(err)
+		fmt.Printf("record count: %d\n", len(records))
+		fmt.Printf("%+v\n", records[0].String())
+		fmt.Printf("%+v\n", records[len(records) - 1].String())
 	})
 })
