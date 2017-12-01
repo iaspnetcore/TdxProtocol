@@ -4,6 +4,7 @@ import "bytes"
 import (
 	"encoding/binary"
 	"github.com/stephenlyu/tds/date"
+	"github.com/stephenlyu/tds/entity"
 )
 
 const (
@@ -145,9 +146,8 @@ type GetFileDataReq struct {
 	FileName string
 }
 
-func MarketLocationFromCode(stockCode string) byte {
-	data := []byte(stockCode)
-	if data[0] <= 0x34 {
+func MarketLocationFromSecurity(security *entity.Security) byte {
+	if security.Exchange == "SZ"{
 		return 0
 	}
 	return 1
@@ -218,10 +218,10 @@ func (this *InfoExReq) Size() int {
 	return 4 + 7 * len(this.Stocks)
 }
 
-func (this *InfoExReq) AddCode(stockCode string) {
+func (this *InfoExReq) AddCode(security *entity.Security) {
 	v := &StockDef{
-		MarketLocationFromCode(stockCode),
-		stockCode,
+		MarketLocationFromSecurity(security),
+		security.GetCode(),
 	}
 
 	this.Stocks = append(this.Stocks, v)
@@ -258,10 +258,10 @@ func (this *FinanceReq) Size() int {
 	return 4 + 7 * len(this.Stocks)
 }
 
-func (this *FinanceReq) AddCode(stockCode string) {
+func (this *FinanceReq) AddCode(security *entity.Security) {
 	v := &StockDef{
-		MarketLocationFromCode(stockCode),
-		stockCode,
+		MarketLocationFromSecurity(security),
+		security.GetCode(),
 	}
 
 	this.Stocks = append(this.Stocks, v)
@@ -299,10 +299,10 @@ func (this *BidReq) Size() int {
 	return 4 + 11 * len(this.Stocks)
 }
 
-func (this *BidReq) AddCode(stockCode string) {
+func (this *BidReq) AddCode(security *entity.Security) {
 	v := &StockDef{
-		MarketLocationFromCode(stockCode),
-		stockCode,
+		MarketLocationFromSecurity(security),
+		security.GetCode(),
 	}
 
 	this.Stocks = append(this.Stocks, v)
@@ -340,7 +340,7 @@ func (this *InstantTransReq) Size() uint16 {
 	return 14
 }
 
-func NewInstantTransReq(seqId uint32, stockCode string, offset uint16, count uint16) *InstantTransReq {
+func NewInstantTransReq(seqId uint32, security *entity.Security, offset uint16, count uint16) *InstantTransReq {
 	req := &InstantTransReq{
 		Header{
 			Zip: 0xc,
@@ -350,8 +350,8 @@ func NewInstantTransReq(seqId uint32, stockCode string, offset uint16, count uin
 			Len1: 0,
 			Cmd: CMD_INSTANT_TRANS,
 		},
-		uint16(MarketLocationFromCode(stockCode)),
-		stockCode,
+		uint16(MarketLocationFromSecurity(security)),
+		security.GetCode(),
 		offset,
 		count,
 	}
@@ -375,7 +375,7 @@ func (this *HisTransReq) Size() uint16 {
 	return 18
 }
 
-func NewHisTransReq(seqId uint32, date uint32, stockCode string, offset uint16, count uint16) *HisTransReq {
+func NewHisTransReq(seqId uint32, date uint32, security *entity.Security, offset uint16, count uint16) *HisTransReq {
 	req := &HisTransReq{
 		Header{
 			Zip: 0xc,
@@ -386,8 +386,8 @@ func NewHisTransReq(seqId uint32, date uint32, stockCode string, offset uint16, 
 			Cmd: CMD_HIS_TRANS,
 		},
 		date,
-		uint16(MarketLocationFromCode(stockCode)),
-		stockCode,
+		uint16(MarketLocationFromSecurity(security)),
+		security.GetCode(),
 		offset,
 		count,
 	}
@@ -415,7 +415,7 @@ func (this *PeriodDataReq) Size() uint16 {
 	return 28
 }
 
-func NewPeriodDataReq(seqId uint32, stockCode string, period uint16, offset uint16, count uint16) *PeriodDataReq {
+func NewPeriodDataReq(seqId uint32, security *entity.Security, period uint16, offset uint16, count uint16) *PeriodDataReq {
 	req := &PeriodDataReq{
 		Header{
 			Zip: 0xc,
@@ -425,8 +425,8 @@ func NewPeriodDataReq(seqId uint32, stockCode string, period uint16, offset uint
 			Len1: 0,
 			Cmd: CMD_PERIOD_DATA,
 		},
-		uint16(MarketLocationFromCode(stockCode)),
-		stockCode,
+		uint16(MarketLocationFromSecurity(security)),
+		security.GetCode(),
 		period,
 		0,
 		offset,
@@ -455,7 +455,7 @@ func (this *PeriodHisDataReq) Size() uint16 {
 	return 20
 }
 
-func NewPeriodHisDataReq(seqId uint32, stockCode string, period uint16, startDate uint32, endDate uint32) *PeriodHisDataReq {
+func NewPeriodHisDataReq(seqId uint32, security *entity.Security, period uint16, startDate uint32, endDate uint32) *PeriodHisDataReq {
 	req := &PeriodHisDataReq{
 		Header{
 			Zip: 0xc,
@@ -465,8 +465,8 @@ func NewPeriodHisDataReq(seqId uint32, stockCode string, period uint16, startDat
 			Len1: 0,
 			Cmd: CMD_PERIOD_HIS_DATA,
 		},
-		uint16(MarketLocationFromCode(stockCode)),
-		stockCode,
+		uint16(MarketLocationFromSecurity(security)),
+		security.GetCode(),
 		startDate,
 		endDate,
 		period,

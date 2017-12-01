@@ -47,8 +47,13 @@ var _ = Describe("BizApiGetInfoEx", func () {
 
 		_, codes := api.GetSZStockCodes()
 
+		securities := make([]*entity.Security, len(codes))
+		for i, code := range codes {
+			securities[i] = entity.ParseSecurityUnsafe(code)
+		}
+
 		start := time.Now().UnixNano()
-		_, result := api.GetInfoEx(codes)
+		_, result := api.GetInfoEx(securities)
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 		for k, l := range result {
 			fmt.Println(k)
@@ -71,8 +76,13 @@ var _ = Describe("BizApiGetInfoEx", func () {
 
 		_, codes := api.GetSZStockCodes()
 
+		securities := make([]*entity.Security, len(codes))
+		for i, code := range codes {
+			securities[i] = entity.ParseSecurityUnsafe(code)
+		}
+
 		start := time.Now().UnixNano()
-		_, result := api.GetInfoEx(codes)
+		_, result := api.GetInfoEx(securities)
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 		for k, l := range result {
 			fmt.Println(k)
@@ -94,7 +104,7 @@ var _ = Describe("BizApiGetDayData", func () {
 		defer api.Cleanup()
 
 		start := time.Now().UnixNano()
-		_, result := api.GetLatestDayData("600000", 500)
+		_, result := api.GetLatestDayData(entity.ParseSecurityUnsafe("600000.SH"), 500)
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 		for _, t := range result {
 			fmt.Println(t)
@@ -114,35 +124,39 @@ var _ = Describe("BizApiMinuteDataPerf", func () {
 
 		api.SetTimeOut(1 * 1000)
 
-		_, codes := api.GetAStockCodes()
-		sort.Strings(codes)
+		_, scodes := api.GetAStockCodes()
+		sort.Strings(scodes)
+
+		securities := make([]*entity.Security, len(scodes))
+		for i, code := range scodes {
+			securities[i] = entity.ParseSecurityUnsafe(code)
+		}
 
 		//codes = codes[:10]
 
 		nThread := 10
 
 		doneChans := make([]chan int, nThread)
-		recordCh := make(chan map[string]interface{}, len(codes) + 1)
+		recordCh := make(chan map[string]interface{}, len(securities) + 1)
 
-		count := (len(codes) + 4) / nThread
+		count := (len(securities) + 4) / nThread
 		start := time.Now().UnixNano()
 		for i := 0; i < nThread; i++ {
 			doneChans[i] = make(chan int)
 
 			start := i * count
 			end := (i + 1) * count
-			if end > len(codes) {
-				end = len(codes)
+			if end > len(securities) {
+				end = len(securities)
 			}
 
-			go func(codes []string, doneCh chan int) {
-				for _, code := range codes {
-					println(code)
-					_, result := api.GetLatestMinuteData(code, 0, 5)
-					recordCh <- map[string]interface{}{"code": code, "record": result}
+			go func(securities []*entity.Security, doneCh chan int) {
+				for _, security := range securities {
+					_, result := api.GetLatestMinuteData(security, 0, 5)
+					recordCh <- map[string]interface{}{"code": security.String(), "record": result}
 				}
 				doneCh <- 1
-			}(codes[start:end], doneChans[i])
+			}(securities[start:end], doneChans[i])
 		}
 
 		for i := 0; i < nThread; i++ {

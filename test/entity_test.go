@@ -18,6 +18,7 @@ import (
 	"github.com/stephenlyu/TdxProtocol/util"
 	"github.com/stephenlyu/tds/datasource/tdx"
 	"github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/entity"
 )
 
 const (
@@ -38,9 +39,9 @@ var _ = Describe("TestBidReq", func() {
 
 	BuildBidBuffer := func () (*bytes.Buffer, *network.BidReq) {
 		req := network.NewBidReq(1)
-		req.AddCode("000001")
-		req.AddCode("000002")
-		req.AddCode("999999")
+		req.AddCode(entity.ParseSecurityUnsafe("000001.SZ"))
+		req.AddCode(entity.ParseSecurityUnsafe("000002.SZ"))
+		req.AddCode(entity.ParseSecurityUnsafe("999999.SH"))
 		buf := new(bytes.Buffer)
 		req.Write(buf)
 		return buf, req
@@ -83,7 +84,7 @@ var _ = Describe("TestBidReq", func() {
 
 func BuildInfoExBuffer() (*bytes.Buffer, *network.InfoExReq) {
 	req := network.NewInfoExReq(1)
-	req.AddCode("000099")
+	req.AddCode(entity.ParseSecurityUnsafe("000099.SZ"))
 	fmt.Println(req)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
@@ -121,9 +122,9 @@ var _ = Describe("TestInfoExReq", func() {
 
 func BuildFinanceBuffer() (*bytes.Buffer, *network.FinanceReq) {
 	req := network.NewFinanceReq(1)
-	req.AddCode("600000")
-	req.AddCode("000001")
-	req.AddCode("000488")
+	req.AddCode(entity.ParseSecurityUnsafe("600000.SH"))
+	req.AddCode(entity.ParseSecurityUnsafe("000001.SZ"))
+	req.AddCode(entity.ParseSecurityUnsafe("000488.SZ"))
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 	fmt.Println(buf.Bytes())
@@ -161,7 +162,7 @@ var _ = Describe("TestFinanceReq", func() {
 })
 
 func BuildInstantTransBuffer() (*bytes.Buffer, *network.InstantTransReq){
-	req := network.NewInstantTransReq(1, "600000", 0, 100)
+	req := network.NewInstantTransReq(1, entity.ParseSecurityUnsafe("600000.SH"), 0, 100)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 	return buf, req
@@ -194,7 +195,7 @@ var _ = Describe("TestInstantTransReq", func() {
 })
 
 func BuildHisTransBuffer() (*bytes.Buffer, *network.HisTransReq) {
-	req := network.NewHisTransReq(1, 20170414, "600000", 0, 100)
+	req := network.NewHisTransReq(1, 20170414, entity.ParseSecurityUnsafe("600000.SH"), 0, 100)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 	return buf, req
@@ -228,7 +229,7 @@ var _ = Describe("TestHisTransReq", func() {
 })
 
 func BuildPeriodDataBuffer() (*bytes.Buffer, *network.PeriodDataReq) {
-	req := network.NewPeriodDataReq(1, "600000", network.PERIOD_DAY, 0, 0x118)
+	req := network.NewPeriodDataReq(1, entity.ParseSecurityUnsafe("600000.SH"), network.PERIOD_DAY, 0, 0x118)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 	return buf, req
@@ -263,7 +264,7 @@ var _ = Describe("TestPeriodDataReq", func() {
 })
 
 func BuildPeriodHisDataBuffer() (*bytes.Buffer, *network.PeriodHisDataReq) {
-	req := network.NewPeriodHisDataReq(1, "600000", network.PERIOD_DAY, 20170703, 20170705)
+	req := network.NewPeriodHisDataReq(1, entity.ParseSecurityUnsafe("600000.SH"), network.PERIOD_DAY, 20170703, 20170705)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 	return buf, req

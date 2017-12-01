@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/stephenlyu/tds/datasource/tdx"
 	"github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/entity"
 )
 
 
@@ -19,7 +20,7 @@ var _ = Describe("GetInfoEx", func () {
 		}
 		defer api.Cleanup()
 
-		_, result := api.GetInfoEx([]string{"600000", "000001"})
+		_, result := api.GetInfoEx([]*entity.Security{entity.ParseSecurityUnsafe("600000.SH"), entity.ParseSecurityUnsafe("000001.SZ")})
 		for k, l := range result {
 			fmt.Println(k)
 			for _, t := range l {
@@ -38,7 +39,7 @@ var _ = Describe("GetMinuteData", func () {
 		}
 		defer api.Cleanup()
 
-		_, result := api.GetMinuteData("600000", 0, 10)
+		_, result := api.GetMinuteData(entity.ParseSecurityUnsafe("600000.SH"), 0, 10)
 		for _, t := range result {
 			fmt.Println(t)
 		}
@@ -54,7 +55,7 @@ var _ = Describe("GetPeriodHisData", func () {
 		}
 		defer api.Cleanup()
 
-		_, data := api.GetPeriodHisData("600000", network.PERIOD_DAY, 20170703, 20171130)
+		_, data := api.GetPeriodHisData(entity.ParseSecurityUnsafe("600000.SH"), network.PERIOD_DAY, 20170703, 20171130)
 		_, p := period.PeriodFromString("D1")
 
 		var r tdxdatasource.TDXRecord

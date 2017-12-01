@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"time"
 	"encoding/hex"
+	"github.com/stephenlyu/tds/entity"
 )
 
 type API struct {
@@ -126,10 +127,10 @@ func (this *API) sendReq(data []byte) (error, []byte) {
 	return err, respData
 }
 
-func (this *API) GetInfoEx(codes []string) (error, map[string][]*InfoExItem) {
+func (this *API) GetInfoEx(securities []*entity.Security) (error, map[string][]*InfoExItem) {
 	req := NewInfoExReq(this.nextSeqId())
-	for _, code := range codes {
-		req.AddCode(code)
+	for _, security := range securities {
+		req.AddCode(security)
 	}
 	buf := new(bytes.Buffer)
 	req.Write(buf)
@@ -143,10 +144,10 @@ func (this *API) GetInfoEx(codes []string) (error, map[string][]*InfoExItem) {
 	return parser.Parse()
 }
 
-func (this *API) GetFinance(codes []string) (error, map[string]*Finance) {
+func (this *API) GetFinance(securities []*entity.Security) (error, map[string]*Finance) {
 	req := NewFinanceReq(this.nextSeqId())
-	for _, code := range codes {
-		req.AddCode(code)
+	for _, security := range securities {
+		req.AddCode(security)
 	}
 	buf := new(bytes.Buffer)
 	req.Write(buf)
@@ -160,8 +161,8 @@ func (this *API) GetFinance(codes []string) (error, map[string]*Finance) {
 	return parser.Parse()
 }
 
-func (this *API) GetPeriodData(code string, period, offset, count uint16) (error, []*Record) {
-	req := NewPeriodDataReq(this.nextSeqId(), code, period, offset, count)
+func (this *API) GetPeriodData(security *entity.Security, period, offset, count uint16) (error, []*Record) {
+	req := NewPeriodDataReq(this.nextSeqId(), security, period, offset, count)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 
@@ -174,8 +175,8 @@ func (this *API) GetPeriodData(code string, period, offset, count uint16) (error
 	return parser.Parse()
 }
 
-func (this *API) GetPeriodHisData(code string, period uint16, startDate, EndDate uint32) (error, []byte) {
-	req := NewPeriodHisDataReq(this.nextSeqId(), code, period, startDate, EndDate)
+func (this *API) GetPeriodHisData(security *entity.Security, period uint16, startDate, EndDate uint32) (error, []byte) {
+	req := NewPeriodHisDataReq(this.nextSeqId(), security, period, startDate, EndDate)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
 
@@ -244,10 +245,10 @@ func (this *API) GetNamesData(block uint16, offset uint16) (error, uint16, []byt
 	return parser.Parse()
 }
 
-func (this *API) GetMinuteData(code string, offset, count uint16) (error, []*Record) {
-	return this.GetPeriodData(code, PERIOD_MINUTE, offset, count)
+func (this *API) GetMinuteData(security *entity.Security, offset, count uint16) (error, []*Record) {
+	return this.GetPeriodData(security, PERIOD_MINUTE, offset, count)
 }
 
-func (this *API) GetDayData(code string, offset, count uint16) (error, []*Record) {
-	return this.GetPeriodData(code, PERIOD_DAY, offset, count)
+func (this *API) GetDayData(security *entity.Security, offset, count uint16) (error, []*Record) {
+	return this.GetPeriodData(security, PERIOD_DAY, offset, count)
 }

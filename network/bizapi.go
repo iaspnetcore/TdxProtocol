@@ -109,7 +109,7 @@ func (this *BizApi) GetAStockCodes() (error, []string) {
 	return nil, result
 }
 
-func (this *BizApi) GetInfoEx(codes []string) (error, map[string][]*InfoExItem) {
+func (this *BizApi) GetInfoEx(codes []*entity.Security) (error, map[string][]*InfoExItem) {
 	result := map[string][]*InfoExItem{}
 
 	n := 20
@@ -132,16 +132,16 @@ func (this *BizApi) GetInfoEx(codes []string) (error, map[string][]*InfoExItem) 
 	return nil, result
 }
 
-func (this *BizApi) GetFinance(codes []string) (error, map[string]*Finance) {
+func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]*Finance) {
 	result := map[string]*Finance{}
 
 	n := 100
-	for i := 0; i < len(codes); i += n {
+	for i := 0; i < len(securites); i += n {
 		end := i + n
-		if end > len(codes) {
-			end = len(codes)
+		if end > len(securites) {
+			end = len(securites)
 		}
-		subCodes := codes[i:end]
+		subCodes := securites[i:end]
 		err, finances := this.api.GetFinance(subCodes)
 		if err != nil {
 			return err, nil
@@ -155,7 +155,7 @@ func (this *BizApi) GetFinance(codes []string) (error, map[string]*Finance) {
 	return nil, result
 }
 
-func (this *BizApi) GetLatestMinuteData(code string, offset int, count int) (error, []*Record) {
+func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*Record) {
 	result := []*Record{}
 
 	n := 0
@@ -166,7 +166,7 @@ func (this *BizApi) GetLatestMinuteData(code string, offset int, count int) (err
 			c = count - n
 		}
 
-		err, data := this.api.GetMinuteData(code, uint16(offset + n), uint16(c))
+		err, data := this.api.GetMinuteData(security, uint16(offset + n), uint16(c))
 		if err != nil {
 			return err, nil
 		}
@@ -182,7 +182,7 @@ func (this *BizApi) GetLatestMinuteData(code string, offset int, count int) (err
 	return nil, result
 }
 
-func (this *BizApi) GetLatestDayData(code string, count int) (error, []*Record) {
+func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*Record) {
 	result := []*Record{}
 
 	n := 0
@@ -193,7 +193,7 @@ func (this *BizApi) GetLatestDayData(code string, count int) (error, []*Record) 
 			c = count - n
 		}
 
-		err, data := this.api.GetDayData(code, uint16(n), uint16(c))
+		err, data := this.api.GetDayData(security, uint16(n), uint16(c))
 		if err != nil {
 			return err, nil
 		}
@@ -352,7 +352,7 @@ func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Perio
 	var getPacket = func(from, to uint32) (err error, data []byte) {
 		retryTimes := 0
 		for retryTimes < 3 {
-			err, data = this.api.GetPeriodHisData(security.Code, uPeriod, from, to)
+			err, data = this.api.GetPeriodHisData(security, uPeriod, from, to)
 			if err == nil {
 				return
 			}
