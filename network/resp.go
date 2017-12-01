@@ -160,6 +160,11 @@ type NamesParser struct {
 	Req Request
 }
 
+type NamesLenParser struct {
+	RespParser
+	Req Request
+}
+
 type FinanceParser struct {
 	RespParser
 	Req *FinanceReq
@@ -907,6 +912,38 @@ func (this *NamesParser) Parse() (err error, length uint16, data []byte) {
 
 	length = binary.LittleEndian.Uint16(this.Data[:2])
 	data = this.Data[2:]
+
+	return
+}
+
+func NewNamesLenParser(req Request, data []byte) *NamesLenParser {
+	return &NamesLenParser{
+		RespParser: RespParser{
+			RawBuffer: data,
+		},
+		Req: req,
+	}
+}
+
+func (this *NamesLenParser) Parse() (err error, length uint32) {
+	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
+		err = errors.New("incomplete data")
+		return
+	}
+
+	if this.getSeqId() != this.Req.GetSeqId() {
+		err = errors.New("bad seq id")
+		return
+	}
+
+	if this.getCmd() != this.Req.GetCmd() {
+		err = errors.New("bad cmd")
+		return
+	}
+
+	this.uncompressIf()
+
+	length = uint32(this.getUint16())
 
 	return
 }

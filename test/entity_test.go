@@ -360,6 +360,39 @@ var _ = Describe("TestGetFileDataReq", func() {
 	})
 })
 
+var _ = Describe("TestNamesLenReq", func() {
+
+	BuildNamesLenBuffer := func(block uint16) (*bytes.Buffer, *network.NamesLenReq) {
+		req := network.NewNamesLenReq(1, block)
+		buf := new(bytes.Buffer)
+		req.Write(buf)
+		return buf, req
+	}
+
+	It("test", func() {
+		fmt.Println("TestNamesLenReq...")
+		buf, req := BuildNamesLenBuffer(0)
+
+		start := time.Now().UnixNano()
+		conn, err := net.Dial("tcp", HOST)
+		chk(err)
+		defer conn.Close()
+
+		_, err = conn.Write(buf.Bytes())
+		chk(err)
+
+		err, buffer := network.ReadResp(conn)
+		chk(err)
+		fmt.Println("time cost: ", time.Now().UnixNano() - start)
+
+		parser := network.NewNamesLenParser(req, buffer)
+		_, length := parser.Parse()
+		fmt.Println(hex.EncodeToString(parser.Data))
+
+		fmt.Println("length: ", length)
+	})
+})
+
 func sendReq(conn net.Conn, reqHex string) {
 	reqData, _ := hex.DecodeString(reqHex)
 
@@ -471,7 +504,7 @@ var _ = Describe("TestCmd06b9", func () {
 
 var _ = Describe("TestCmd000d", func () {
 	It("test", func() {
-		reqHex := "0c18186b0001080008004e0400007ac93301"
+		reqHex := "0c18186b0001080008004e0401007ac93301"
 		reqData, _ := hex.DecodeString(reqHex)
 
 		fmt.Println("")

@@ -3,11 +3,13 @@ package network
 import "bytes"
 import (
 	"encoding/binary"
+	"github.com/stephenlyu/tds/date"
 )
 
 const (
 	CMD_INFO_EX = 0x000f
 	CMD_FINANCE = 0x0010
+	CMD_NAMES_LEN = 0x044e
 	CMD_NAMES = 0x0450
 	CMD_BID = 0x0526
 	CMD_PERIOD_DATA = 0x052d
@@ -64,6 +66,11 @@ type NamesReq struct {
 	Header
 	Block uint16
 	Offset uint16
+}
+
+type NamesLenReq struct {
+	Header
+	Block uint16
 }
 
 type InfoExReq struct {
@@ -446,6 +453,35 @@ func NewNamesReq(seqId uint32, block uint16, offset uint16) *NamesReq {
 		},
 		block,
 		offset,
+	}
+
+	req.Header.Len = req.Size()
+	req.Header.Len1 = req.Header.Len
+
+	return req
+}
+
+func (this *NamesLenReq) Write(writer *bytes.Buffer) {
+	this.Header.Write(writer)
+	writeUInt16(writer, this.Block)
+	writeUInt32(writer, uint32(date.GetTodayInt()))
+}
+
+func (this *NamesLenReq) Size() uint16 {
+	return 8
+}
+
+func NewNamesLenReq(seqId uint32, block uint16) *NamesLenReq {
+	req := &NamesLenReq{
+		Header{
+			Zip: 0xc,
+			SeqId: seqId,
+			PacketType: 0x1,
+			Len: 0,
+			Len1: 0,
+			Cmd: CMD_NAMES_LEN,
+		},
+		block,
 	}
 
 	req.Header.Len = req.Size()
