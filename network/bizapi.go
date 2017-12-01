@@ -248,3 +248,63 @@ func (this *BizApi) DownloadFile(fileName string, outputDir string) error {
 	os.MkdirAll(filepath.Dir(filePath), 0777)
 	return ioutil.WriteFile(filePath, fileData, 0666)
 }
+
+func (this *BizApi) GetNamesData(block uint16) (err error, namesData []byte) {
+	err, total := this.api.GetNamesLength(block)
+	if err != nil {
+		return
+	}
+
+	var getPacket = func(offset uint32) (err error, packetLength uint16, data []byte) {
+		retryTimes := 0
+		for retryTimes < 3 {
+			err, packetLength, data = this.api.GetNamesData(block, uint16(offset))
+			if err == nil {
+				return
+			}
+			time.Sleep(time.Millisecond * 500)
+			retryTimes++
+		}
+		return
+	}
+
+	var offset uint32 = 0
+
+	var packetLength uint16
+	var data []byte
+	for offset < total {
+		err, packetLength, data = getPacket(offset)
+		if err != nil {
+			return
+		}
+
+		namesData = append(namesData, data...)
+
+		offset += uint32(packetLength)
+	}
+
+	return
+}
+
+func (this *BizApi) DownloadNamesData(blocks []uint16, filePath string) error {
+	if len(blocks) == 0 {
+		return nil
+	}
+
+	var allData []byte
+
+	for _, block := range blocks {
+		err, data := this.GetNamesData(block)
+		if err != nil {
+			return err
+		}
+		allData = append(allData, data...)
+	}
+
+	os.MkdirAll(filepath.Dir(filePath), 0777)
+	return ioutil.WriteFile(filePath, allData, 0666)
+}
+
+func (this *BizApi) DownloadAStockNamesData(filePath string) error {
+	return this.DownloadNamesData([]uint16{0, 1}, filePath)
+}

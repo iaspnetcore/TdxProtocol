@@ -6,6 +6,7 @@ import (
 	"net"
 	"bytes"
 	"time"
+	"encoding/hex"
 )
 
 type API struct {
@@ -31,8 +32,37 @@ func (this *API) SetTimeOut(timeout int) {
 }
 
 func (this *API) Initialize(host string) error {
+	sendReq := func(conn net.Conn, reqHex string) error {
+		reqData, _ := hex.DecodeString(reqHex)
+
+		_, err := conn.Write(reqData)
+		if err != nil {
+			return err
+		}
+
+		err, _ = ReadResp(conn)
+		return err
+	}
+
 	factory := func() (net.Conn, error) {
-		return net.Dial("tcp", host)
+		conn, err := net.Dial("tcp", host)
+		if err != nil {
+			return conn, err
+		}
+
+		// Connection Prolog
+		err = sendReq(conn, "0c0218940001030003000d0001")
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+
+		err = sendReq(conn, "0c031899000120002000db0fb3a4bdadd6a4c8af0000009a993141090000000000000000000000000003")
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+		return conn, nil
 	}
 
 	p, err := pool.NewChannelPool(5, 5, factory)
@@ -169,6 +199,34 @@ func (this *API) GetFileData(fileName string, offset uint32, length uint32) (err
 	}
 
 	parser := NewGetFileDataParser(req, respData)
+	return parser.Parse()
+}
+
+func (this *API) GetNamesLength(block uint16) (error, uint32) {
+	req := NewNamesLenReq(this.nextSeqId(), block)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, 0
+	}
+
+	parser := NewNamesLenParser(req, respData)
+	return parser.Parse()
+}
+
+func (this *API) GetNamesData(block uint16, offset uint16) (error, uint16, []byte) {
+	req := NewNamesReq(this.nextSeqId(), block, offset)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, 0, nil
+	}
+
+	parser := NewNamesParser(req, respData)
 	return parser.Parse()
 }
 

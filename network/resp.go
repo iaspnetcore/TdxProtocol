@@ -961,7 +961,7 @@ func ReadResp(conn net.Conn) (error, []byte) {
 			log.Errorf("ReadResp - read header fail, error: %v", err)
 			return err, nil
 		} else {
-			log.Infof("ReadResp - read header success, n: %d", n)
+			log.Debugf("ReadResp - read header success, n: %d", n)
 		}
 		nRead += n
 

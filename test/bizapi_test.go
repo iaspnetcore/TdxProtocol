@@ -181,3 +181,17 @@ var _ = Describe("BizApiGetFile", func () {
 		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 	})
 })
+
+var _ = Describe("BizApiGetNameData", func () {
+	It("test", func() {
+		fmt.Println("test get name data...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		chk(err)
+		defer api.Cleanup()
+
+		start := time.Now().UnixNano()
+		err = api.DownloadAStockNamesData("tmp/names.dat")
+		chk(err)
+		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+	})
+})
