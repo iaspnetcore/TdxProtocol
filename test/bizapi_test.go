@@ -193,8 +193,9 @@ var _ = Describe("BizApiGetNameData", func () {
 		chk(err)
 		defer api.Cleanup()
 
+		os.RemoveAll("tmp")
 		start := time.Now().UnixNano()
-		err = api.DownloadAStockNamesData("tmp/names.dat")
+		err = api.DownloadAStockNamesData("tmp")
 		chk(err)
 		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 	})
@@ -207,7 +208,7 @@ var _ = Describe("BizApiDownloadDayHisData", func () {
 		chk(err)
 		defer api.Cleanup()
 
-		security, _ := entity.ParseSecurity("000001.SZ")
+		security, _ := entity.ParseSecurity("999999.SH")
 		_, dp := period.PeriodFromString("D1")
 
 		os.RemoveAll("temp")

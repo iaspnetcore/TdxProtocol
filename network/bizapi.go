@@ -12,6 +12,7 @@ import (
 	"github.com/stephenlyu/tds/date"
 	. "github.com/stephenlyu/tds/period"
 	"github.com/stephenlyu/tds/entity"
+	"strings"
 )
 
 var blockExchangeMap = map[uint16]string{
@@ -288,27 +289,28 @@ func (this *BizApi) GetNamesData(block uint16) (err error, namesData []byte) {
 	return
 }
 
-func (this *BizApi) DownloadNamesData(blocks []uint16, filePath string) error {
+func (this *BizApi) DownloadNamesData(blocks []uint16, outputDir string) error {
 	if len(blocks) == 0 {
 		return nil
 	}
 
-	var allData []byte
+	os.MkdirAll(outputDir, 0777)
 
 	for _, block := range blocks {
 		err, data := this.GetNamesData(block)
 		if err != nil {
 			return err
 		}
-		allData = append(allData, data...)
+		filePath := filepath.Join(outputDir, fmt.Sprintf("%s-names.dat", strings.ToLower(blockExchangeMap[block])))
+
+		ioutil.WriteFile(filePath, data, 0666)
 	}
 
-	os.MkdirAll(filepath.Dir(filePath), 0777)
-	return ioutil.WriteFile(filePath, allData, 0666)
+	return nil
 }
 
-func (this *BizApi) DownloadAStockNamesData(filePath string) error {
-	return this.DownloadNamesData([]uint16{0, 1}, filePath)
+func (this *BizApi) DownloadAStockNamesData(outputDir string) error {
+	return this.DownloadNamesData([]uint16{0, 1}, outputDir)
 }
 
 func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
