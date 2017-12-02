@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"github.com/stephenlyu/tds/date"
 	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/period"
 )
 
 const (
@@ -37,6 +38,13 @@ const (
 	PERIOD_DAY = 0x0004
 	PERIOD_MINUTE = 0x0007
 )
+
+var periodMap = map[uint16]period.Period {
+	PERIOD_MINUTE: period.PERIOD_M,
+	PERIOD_MINUTE5: period.PERIOD_M5,
+	PERIOD_DAY: period.PERIOD_D,
+}
+
 
 type Request interface {
 	GetSeqId() uint32

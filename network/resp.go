@@ -9,11 +9,12 @@ import (
 	"io"
 	"net"
 	"fmt"
-	"github.com/stephenlyu/TdxProtocol/util"
 	"github.com/z-ray/log"
 	"encoding/hex"
 	"reflect"
 	"strings"
+	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/datasource/tdx"
 )
 
 const (
@@ -124,16 +125,6 @@ type Bid struct {
 	SellVol5 uint32
 }
 
-type Record struct {
-	Date uint32				`json:"date"`
-	Open uint32				`json:"open"`
-	Close uint32			`json:"close"`
-	High uint32				`json:"high"`
-	Low uint32				`json:"low"`
-	Volume float32			`json:"volume"`
-	Amount float32			`json:"amount"`
-}
-
 type RespParser struct {
 	RawBuffer []byte
 	Current int
@@ -194,13 +185,6 @@ type GetFileLenParser struct {
 type GetFileDataParser struct {
 	RespParser
 	Req Request
-}
-
-func (this *Record) MinuteString() string {
-	return fmt.Sprintf("Record{date: %s Open: %d Close: %d High: %d Low: %d Volume: %f Amount: %f}",
-		util.FormatMinuteDate(this.Date),
-		this.Open, this.Close, this.High,
-		this.Low, this.Volume, this.Amount)
 }
 
 func (this *RespParser) getCmd() uint16 {
@@ -778,7 +762,7 @@ func NewPeriodDataParser(req Request, data []byte) *PeriodDataParser {
 	}
 }
 
-func (this *PeriodDataParser) Parse() (error, []*Record) {
+func (this *PeriodDataParser) Parse() (error, []*entity.Record) {
 	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
 		return errors.New("incomplete data"), nil
 	}
@@ -797,23 +781,25 @@ func (this *PeriodDataParser) Parse() (error, []*Record) {
 	count := this.getUint16()
 	var priceBase int
 
-	result := make([]*Record, count)
+	period := periodMap[this.Req.(*PeriodDataReq).Period]
+
+	result := make([]*entity.Record, count)
 
 	for i := 0; i < int(count); i++ {
-		record := &Record{}
-		record.Date = this.getUint32()
+		record := &entity.Record{}
+		record.Date = tdxdatasource.DateToTimestamp(period, this.getUint32())
 
 		if first {
 			priceBase = this.parseData2()
-			record.Open = uint32(priceBase)
+			record.Open = int32(priceBase)
 			first = false
 		} else {
-			record.Open = uint32(this.parseData() + priceBase)
+			record.Open = int32(this.parseData() + priceBase)
 		}
 
-		record.Close = uint32(this.parseData() + int(record.Open))
-		record.High = uint32(this.parseData() + int(record.Open))
-		record.Low = uint32(this.parseData() + int(record.Open))
+		record.Close = int32(this.parseData() + int(record.Open))
+		record.High = int32(this.parseData() + int(record.Open))
+		record.Low = int32(this.parseData() + int(record.Open))
 		record.Volume = this.getFloat32()
 		record.Amount = this.getFloat32()
 		result[i] = record

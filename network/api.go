@@ -161,7 +161,7 @@ func (this *API) GetFinance(securities []*entity.Security) (error, map[string]*F
 	return parser.Parse()
 }
 
-func (this *API) GetPeriodData(security *entity.Security, period, offset, count uint16) (error, []*Record) {
+func (this *API) GetPeriodData(security *entity.Security, period, offset, count uint16) (error, []*entity.Record) {
 	req := NewPeriodDataReq(this.nextSeqId(), security, period, offset, count)
 	buf := new(bytes.Buffer)
 	req.Write(buf)
@@ -245,10 +245,10 @@ func (this *API) GetNamesData(block uint16, offset uint16) (error, uint16, []byt
 	return parser.Parse()
 }
 
-func (this *API) GetMinuteData(security *entity.Security, offset, count uint16) (error, []*Record) {
+func (this *API) GetMinuteData(security *entity.Security, offset, count uint16) (error, []*entity.Record) {
 	return this.GetPeriodData(security, PERIOD_MINUTE, offset, count)
 }
 
-func (this *API) GetDayData(security *entity.Security, offset, count uint16) (error, []*Record) {
+func (this *API) GetDayData(security *entity.Security, offset, count uint16) (error, []*entity.Record) {
 	return this.GetPeriodData(security, PERIOD_DAY, offset, count)
 }

@@ -155,8 +155,8 @@ func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]
 	return nil, result
 }
 
-func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*Record) {
-	result := []*Record{}
+func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*entity.Record) {
+	result := []*entity.Record{}
 
 	n := 0
 
@@ -182,8 +182,8 @@ func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, c
 	return nil, result
 }
 
-func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*Record) {
-	result := []*Record{}
+func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*entity.Record) {
+	result := []*entity.Record{}
 
 	n := 0
 

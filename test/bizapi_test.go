@@ -135,7 +135,26 @@ var _ = Describe("BizApiGetDayData", func () {
 		defer api.Cleanup()
 
 		start := time.Now().UnixNano()
-		_, result := api.GetLatestDayData(entity.ParseSecurityUnsafe("600000.SH"), 500)
+		_, result := api.GetLatestDayData(entity.ParseSecurityUnsafe("600000.SH"), 10000)
+		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+		for _, t := range result {
+			fmt.Println(t)
+		}
+	})
+})
+
+var _ = Describe("BizApiGetMinuteData", func () {
+	It("test", func() {
+		fmt.Println("test GetMinuteData...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer api.Cleanup()
+
+		start := time.Now().UnixNano()
+		_, result := api.GetLatestMinuteData(entity.ParseSecurityUnsafe("600000.SH"), 0, 1000)
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 		for _, t := range result {
 			fmt.Println(t)
@@ -204,11 +223,11 @@ var _ = Describe("BizApiMinuteDataPerf", func () {
 				break
 			}
 
-			result, ok := d["record"].([]*network.Record)
+			result, ok := d["record"].([]*entity.Record)
 			if ok {
 				fmt.Println("stock: ", d["code"])
 				for _, r := range result {
-					fmt.Println(r.MinuteString())
+					fmt.Println(r.GetDate())
 				}
 			}
 		}
