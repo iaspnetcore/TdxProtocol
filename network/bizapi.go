@@ -13,6 +13,7 @@ import (
 	. "github.com/stephenlyu/tds/period"
 	"github.com/stephenlyu/tds/entity"
 	"strings"
+	"encoding/json"
 )
 
 var blockExchangeMap = map[uint16]string{
@@ -130,6 +131,36 @@ func (this *BizApi) GetInfoEx(codes []*entity.Security) (error, map[string][]*In
 	}
 
 	return nil, result
+}
+
+func (this *BizApi) DownloadInfoEx() error {
+	err, codes := this.GetAStockCodes()
+	if err != nil {
+		return err
+	}
+	securities := make([]*entity.Security, len(codes))
+	for i, code := range codes {
+		securities[i] = entity.ParseSecurityUnsafe(code)
+	}
+
+	err, result := this.GetInfoEx(securities)
+	if err != nil {
+		return err
+	}
+
+	infoEx := map[string][]*InfoExItem{}
+
+	for code, items := range result {
+		security := entity.ParseSecurityUnsafe(code)
+		market := strings.ToLower(security.GetExchange())
+
+		infoEx[fmt.Sprintf("%s%s", market, security.GetCode())] = items
+	}
+
+	filePath := filepath.Join(this.workDir, "T0002/hq_cache/infoex.dat")
+
+	bytes, _ := json.Marshal(infoEx)
+	return ioutil.WriteFile(filePath, bytes, 0666)
 }
 
 func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]*Finance) {

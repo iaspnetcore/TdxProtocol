@@ -343,3 +343,18 @@ var _ = Describe("BizApiDownloadM1HisData", func () {
 		fmt.Printf("%+v\n", records[len(records) - 1].String())
 	})
 })
+
+var _ = Describe("BizApiDownloadInfoEx", func () {
+	It("test", func() {
+		fmt.Println("test downloading infoex data...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		chk(err)
+		defer api.Cleanup()
+
+		os.RemoveAll("temp")
+		start := time.Now().UnixNano()
+		err = api.DownloadInfoEx()
+		chk(err)
+		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+	})
+})
