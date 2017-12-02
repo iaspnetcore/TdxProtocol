@@ -207,9 +207,9 @@ var _ = Describe("BizApiGetNameData", func () {
 		chk(err)
 		defer api.Cleanup()
 
-		os.RemoveAll("tmp")
+		os.RemoveAll("temp")
 		start := time.Now().UnixNano()
-		err = api.DownloadAStockNamesData("tmp")
+		err = api.DownloadAStockNamesData()
 		chk(err)
 		fmt.Println("got:", "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 	})

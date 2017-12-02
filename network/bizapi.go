@@ -289,10 +289,12 @@ func (this *BizApi) GetNamesData(block uint16) (err error, namesData []byte) {
 	return
 }
 
-func (this *BizApi) DownloadNamesData(blocks []uint16, outputDir string) error {
+func (this *BizApi) DownloadNamesData(blocks []uint16) error {
 	if len(blocks) == 0 {
 		return nil
 	}
+
+	outputDir := filepath.Join(this.workDir, "T0002/hq_cache")
 
 	os.MkdirAll(outputDir, 0777)
 
@@ -309,8 +311,8 @@ func (this *BizApi) DownloadNamesData(blocks []uint16, outputDir string) error {
 	return nil
 }
 
-func (this *BizApi) DownloadAStockNamesData(outputDir string) error {
-	return this.DownloadNamesData([]uint16{0, 1}, outputDir)
+func (this *BizApi) DownloadAStockNamesData() error {
+	return this.DownloadNamesData([]uint16{0, 1})
 }
 
 func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
