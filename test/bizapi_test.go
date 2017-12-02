@@ -135,7 +135,12 @@ var _ = Describe("BizApiGetDayData", func () {
 		defer api.Cleanup()
 
 		start := time.Now().UnixNano()
-		_, result := api.GetLatestDayData(entity.ParseSecurityUnsafe("600000.SH"), 10000)
+		err, result := api.GetLatestDayData(entity.ParseSecurityUnsafe("600000.SH"), 10000)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
 		for _, t := range result {
 			fmt.Println(t)

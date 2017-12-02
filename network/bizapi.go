@@ -186,7 +186,20 @@ func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]
 	return nil, result
 }
 
-func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*entity.Record) {
+func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period, offset int, count int) (error, []*entity.Record) {
+	var uPeriod uint16
+	pName := period.ShortName()
+	switch {
+	case pName == "M1":
+		uPeriod = PERIOD_MINUTE
+	case pName == "M5":
+		uPeriod = PERIOD_MINUTE5
+	case pName == "D1":
+		uPeriod = PERIOD_DAY
+	default:
+		return errors.New("bad period"), nil
+	}
+
 	result := []*entity.Record{}
 
 	n := 0
@@ -197,7 +210,7 @@ func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, c
 			c = count - n
 		}
 
-		err, data := this.api.GetMinuteData(security, uint16(offset + n), uint16(c))
+		err, data := this.api.GetPeriodData(security, uPeriod, uint16(offset + n), uint16(c))
 		if err != nil {
 			return err, nil
 		}
@@ -213,31 +226,12 @@ func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, c
 	return nil, result
 }
 
+func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*entity.Record) {
+	return this.GetLatestPeriodData(security, PERIOD_M, offset, count)
+}
+
 func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*entity.Record) {
-	result := []*entity.Record{}
-
-	n := 0
-
-	for n < count {
-		c := 280
-		if c > count - n {
-			c = count - n
-		}
-
-		err, data := this.api.GetDayData(security, uint16(n), uint16(c))
-		if err != nil {
-			return err, nil
-		}
-
-		if len(data) == 0 {
-			break
-		}
-
-		result = append(data, result...)
-		n += len(data)
-	}
-
-	return nil, result
+	return this.GetLatestPeriodData(security, PERIOD_D, 0, count)
 }
 
 func (this *BizApi) DownloadFile(fileName string, outputDir string) error {
