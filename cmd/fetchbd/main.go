@@ -3,11 +3,12 @@ package main
 import (
 	"github.com/stephenlyu/TdxProtocol/network"
 	"fmt"
-	"sort"
 	"time"
 	"encoding/json"
 	"io/ioutil"
 	"flag"
+	"github.com/stephenlyu/tds/entity"
+	"strings"
 )
 
 
@@ -15,32 +16,17 @@ const (
 	HOST = "125.39.80.98"
 )
 
-func getStockCodes(api *network.BizApi) (err error, stockCodes []string) {
-
-	err, codes := api.GetSHStockCodes()
-	if err != nil {
-		return
-	}
-
-	stockCodes = append(stockCodes, codes...)
-
-	err, codes = api.GetSZStockCodes()
-	if err != nil {
-		return
-	}
-
-	stockCodes = append(stockCodes, codes...)
-	return
-}
-
 func getInfoEx(api *network.BizApi) (error, map[string][]*network.InfoExItem) {
-	err, codes := getStockCodes(api)
-	sort.Strings(codes)
+	err, codes := api.GetAStockCodes()
 	if err != nil {
 		return err, nil
 	}
+	securities := make([]*entity.Security, len(codes))
+	for i, code := range codes {
+		securities[i] = entity.ParseSecurityUnsafe(code)
+	}
 
-	return api.GetInfoEx(codes)
+	return api.GetInfoEx(securities)
 }
 
 func tryGetInfoEx(host string) (error, map[string][]*network.InfoExItem) {
@@ -57,17 +43,8 @@ func saveFormat1(result map[string][]*network.InfoExItem, filePath string) {
 	finalResult := map[string]interface{}{}
 
 	for code, items := range result {
-		var market string
-		switch code[:2] {
-		case "60":
-			market = "sh"
-		case "00":
-			fallthrough
-		case "30":
-			market = "sz"
-		default:
-			continue
-		}
+		security := entity.ParseSecurityUnsafe(code)
+		market := strings.ToLower(security.GetExchange())
 
 		if _, ok := finalResult[market]; !ok {
 			finalResult[market] = map[string]interface{}{}
@@ -94,19 +71,10 @@ func saveFormat2(result map[string][]*network.InfoExItem, filePath string) {
 	infoEx := map[string][]*network.InfoExItem{}
 
 	for code, items := range result {
-		var market string
-		switch code[:2] {
-		case "60":
-			market = "sh"
-		case "00":
-			fallthrough
-		case "30":
-			market = "sz"
-		default:
-			continue
-		}
+		security := entity.ParseSecurityUnsafe(code)
+		market := strings.ToLower(security.GetExchange())
 
-		infoEx[fmt.Sprintf("%s%s", market, code)] = items
+		infoEx[fmt.Sprintf("%s%s", market, security.GetCode())] = items
 	}
 
 	bytes, _ := json.MarshalIndent(infoEx, "", "  ")

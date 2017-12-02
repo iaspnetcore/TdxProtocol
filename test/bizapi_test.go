@@ -45,7 +45,11 @@ var _ = Describe("BizApiGetInfoEx", func () {
 		}
 		defer api.Cleanup()
 
-		_, codes := api.GetSZStockCodes()
+		err, codes := api.GetSZStockCodes()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		securities := make([]*entity.Security, len(codes))
 		for i, code := range codes {
@@ -89,6 +93,33 @@ var _ = Describe("BizApiGetInfoEx", func () {
 			for _, t := range l {
 				fmt.Println(t)
 			}
+		}
+	})
+})
+
+var _ = Describe("BizApiGetFinance", func () {
+	It("test", func() {
+		fmt.Println("test GetFinance...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer api.Cleanup()
+
+		_, codes := api.GetSZStockCodes()
+
+		securities := make([]*entity.Security, len(codes))
+		for i, code := range codes {
+			securities[i] = entity.ParseSecurityUnsafe(code)
+		}
+
+		start := time.Now().UnixNano()
+		_, result := api.GetFinance(securities)
+		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+		for k, v := range result {
+			fmt.Println(k)
+			fmt.Println(v)
 		}
 	})
 })

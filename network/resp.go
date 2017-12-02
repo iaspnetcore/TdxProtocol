@@ -530,16 +530,16 @@ func (this *InfoExParser) Parse() (error, map[string][]*InfoExItem) {
 	count := this.getUint16()
 
 	for ; count > 0; count-- {
-		this.skipByte(1)
-		stockCode := string(this.Data[this.Current:this.Current + STOCK_CODE_LEN])
+		loc := this.getByte()
+		stockCode := GetFullCode(loc, string(this.Data[this.Current:this.Current + STOCK_CODE_LEN]))
 		this.skipByte(STOCK_CODE_LEN)
 		recordCount := this.getUint16()
 
 		result[stockCode] = []*InfoExItem{}
 
 		for ; recordCount > 0; recordCount-- {
-			this.skipByte(1)
-			stockCode1 := string(this.Data[this.Current:this.Current + STOCK_CODE_LEN])
+			loc := this.getByte()
+			stockCode1 := GetFullCode(loc, string(this.Data[this.Current:this.Current + STOCK_CODE_LEN]))
 			this.skipByte(STOCK_CODE_LEN + 1)
 			if stockCode != stockCode1 {
 				return errors.New(fmt.Sprintf("bad stock code, stockCode: %s stockCode1: %s", stockCode, stockCode1)), nil
@@ -607,8 +607,8 @@ func (this *FinanceParser) Parse() (err error, finances map[string]*Finance) {
 	count := this.getUint16()
 
 	for ; count > 0; count-- {
-		this.skipByte(1)
-		stockCode := string(this.Data[this.Current:this.Current + STOCK_CODE_LEN])
+		loc := this.getByte()
+		stockCode := GetFullCode(loc, string(this.Data[this.Current:this.Current + STOCK_CODE_LEN]))
 		this.skipByte(STOCK_CODE_LEN)
 
 		finance := new(Finance)
@@ -698,8 +698,8 @@ func (this *BidParser) Parse() (error, map[string]*Bid) {
 	count := this.getUint16()
 
 	for ; count > 0; count-- {
-		this.skipByte(1)	// Location
-		stockCode := string(this.Data[this.Current:this.Current + STOCK_CODE_LEN])
+		loc := this.getByte()
+		stockCode := GetFullCode(loc, string(this.Data[this.Current:this.Current + STOCK_CODE_LEN]))
 		this.skipByte(STOCK_CODE_LEN)
 		this.skipByte(2) // 未知
 

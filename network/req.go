@@ -153,6 +153,13 @@ func MarketLocationFromSecurity(security *entity.Security) byte {
 	return 1
 }
 
+func GetFullCode(loc byte, code string) string {
+	if loc == 0 {
+		return code + ".SZ"
+	}
+	return code + ".SH"
+}
+
 func BlockFromCode(stockCode string) int {
 	data := []byte(stockCode)
 	switch data[0] {

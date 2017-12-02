@@ -83,11 +83,11 @@ func (this *BizApi) getStockCodesByBlock(block uint16) (error, []string) {
 }
 
 func (this *BizApi) GetSZStockCodes() (error, []string) {
-	return this.getStockCodesByBlock(BLOCK_SZ_A)
+	return this.getStockCodesByBlock(0)
 }
 
 func (this *BizApi) GetSHStockCodes() (error, []string) {
-	return this.getStockCodesByBlock(BLOCK_SH_A)
+	return this.getStockCodesByBlock(1)
 }
 
 func (this *BizApi) GetAStockCodes() (error, []string) {
