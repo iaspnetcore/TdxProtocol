@@ -393,3 +393,16 @@ func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Perio
 
 	return nil
 }
+
+func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period Period) error {
+	ds := tdxdatasource.NewDataSource(this.workDir, true)
+	err, r := ds.GetLastRecord(security, period)
+	var startDate, endDate uint32
+	if err == nil {
+		r.Date += date.DAY_MILLISECONDS
+		startDate = uint32(date.GetDateDay(r.Date))
+	}
+
+	fmt.Println(startDate, endDate)
+	return this.DownloadPeriodHisData(security, period, startDate, endDate)
+}

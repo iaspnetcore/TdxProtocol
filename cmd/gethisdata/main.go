@@ -22,6 +22,7 @@ func main() {
 	periodStr := flag.String("period", "D1", "Period to get")
 	startDate := flag.Int("start-date", 0, "Start date to get data")
 	dataDir := flag.String("data-dir", "data", "Data directory")
+	smart := flag.Bool("smart", false, "Data directory")
 	flag.Parse()
 
 	err, dp := period.PeriodFromString(*periodStr)
@@ -43,7 +44,11 @@ func main() {
 			continue
 		}
 
-		err = api.DownloadPeriodHisData(security, dp,  uint32(*startDate), 0)
+		if *smart {
+			err = api.DownloadLatestPeriodHisData(security, dp)
+		} else {
+			err = api.DownloadPeriodHisData(security, dp,  uint32(*startDate), 0)
+		}
 		if err != nil {
 			fmt.Printf("[ERROR] download %s data fail, error: %v\n", code, err)
 		}
