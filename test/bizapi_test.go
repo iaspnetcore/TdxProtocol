@@ -142,8 +142,8 @@ var _ = Describe("BizApiGetDayData", func () {
 		}
 
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
-		for _, t := range result {
-			fmt.Println(t)
+		for i := range result {
+			fmt.Println(&result[i])
 		}
 	})
 })
@@ -161,8 +161,8 @@ var _ = Describe("BizApiGetMinuteData", func () {
 		start := time.Now().UnixNano()
 		_, result := api.GetLatestMinuteData(entity.ParseSecurityUnsafe("600000.SH"), 0, 1000)
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
-		for _, t := range result {
-			fmt.Println(t)
+		for i := range result {
+			fmt.Println(&result[i])
 		}
 	})
 })

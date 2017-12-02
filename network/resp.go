@@ -762,7 +762,7 @@ func NewPeriodDataParser(req Request, data []byte) *PeriodDataParser {
 	}
 }
 
-func (this *PeriodDataParser) Parse() (error, []*entity.Record) {
+func (this *PeriodDataParser) Parse() (error, []entity.Record) {
 	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
 		return errors.New("incomplete data"), nil
 	}
@@ -783,10 +783,10 @@ func (this *PeriodDataParser) Parse() (error, []*entity.Record) {
 
 	period := periodMap[this.Req.(*PeriodDataReq).Period]
 
-	result := make([]*entity.Record, count)
+	result := make([]entity.Record, count)
 
 	for i := 0; i < int(count); i++ {
-		record := &entity.Record{}
+		record := &result[i]
 		record.Date = tdxdatasource.DateToTimestamp(period, this.getUint32())
 
 		if first {
@@ -802,7 +802,6 @@ func (this *PeriodDataParser) Parse() (error, []*entity.Record) {
 		record.Low = int32(this.parseData() + int(record.Open))
 		record.Volume = this.getFloat32()
 		record.Amount = this.getFloat32()
-		result[i] = record
 
 		priceBase = int(record.Close)
 	}

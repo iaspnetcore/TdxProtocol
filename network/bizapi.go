@@ -186,7 +186,7 @@ func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]
 	return nil, result
 }
 
-func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period, offset int, count int) (error, []*entity.Record) {
+func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period, offset int, count int) (error, []entity.Record) {
 	var uPeriod uint16
 	pName := period.ShortName()
 	switch {
@@ -200,7 +200,7 @@ func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period
 		return errors.New("bad period"), nil
 	}
 
-	result := []*entity.Record{}
+	result := []entity.Record{}
 
 	n := 0
 
@@ -226,11 +226,11 @@ func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period
 	return nil, result
 }
 
-func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*entity.Record) {
+func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []entity.Record) {
 	return this.GetLatestPeriodData(security, PERIOD_M, offset, count)
 }
 
-func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*entity.Record) {
+func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []entity.Record) {
 	return this.GetLatestPeriodData(security, PERIOD_D, 0, count)
 }
 
