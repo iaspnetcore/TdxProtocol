@@ -13,6 +13,7 @@ import (
 	. "github.com/stephenlyu/tds/period"
 	"github.com/stephenlyu/tds/entity"
 	"strings"
+	"encoding/json"
 )
 
 var blockExchangeMap = map[uint16]string{
@@ -83,11 +84,11 @@ func (this *BizApi) getStockCodesByBlock(block uint16) (error, []string) {
 }
 
 func (this *BizApi) GetSZStockCodes() (error, []string) {
-	return this.getStockCodesByBlock(BLOCK_SZ_A)
+	return this.getStockCodesByBlock(0)
 }
 
 func (this *BizApi) GetSHStockCodes() (error, []string) {
-	return this.getStockCodesByBlock(BLOCK_SH_A)
+	return this.getStockCodesByBlock(1)
 }
 
 func (this *BizApi) GetAStockCodes() (error, []string) {
@@ -132,6 +133,36 @@ func (this *BizApi) GetInfoEx(codes []*entity.Security) (error, map[string][]*In
 	return nil, result
 }
 
+func (this *BizApi) DownloadInfoEx() error {
+	err, codes := this.GetAStockCodes()
+	if err != nil {
+		return err
+	}
+	securities := make([]*entity.Security, len(codes))
+	for i, code := range codes {
+		securities[i] = entity.ParseSecurityUnsafe(code)
+	}
+
+	err, result := this.GetInfoEx(securities)
+	if err != nil {
+		return err
+	}
+
+	infoEx := map[string][]*InfoExItem{}
+
+	for code, items := range result {
+		security := entity.ParseSecurityUnsafe(code)
+		market := strings.ToLower(security.GetExchange())
+
+		infoEx[fmt.Sprintf("%s%s", market, security.GetCode())] = items
+	}
+
+	filePath := filepath.Join(this.workDir, "T0002/hq_cache/infoex.dat")
+
+	bytes, _ := json.Marshal(infoEx)
+	return ioutil.WriteFile(filePath, bytes, 0666)
+}
+
 func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]*Finance) {
 	result := map[string]*Finance{}
 
@@ -155,8 +186,21 @@ func (this *BizApi) GetFinance(securites []*entity.Security) (error, map[string]
 	return nil, result
 }
 
-func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []*Record) {
-	result := []*Record{}
+func (this *BizApi) GetLatestPeriodData(security *entity.Security, period Period, offset int, count int) (error, []entity.Record) {
+	var uPeriod uint16
+	pName := period.ShortName()
+	switch {
+	case pName == "M1":
+		uPeriod = PERIOD_MINUTE
+	case pName == "M5":
+		uPeriod = PERIOD_MINUTE5
+	case pName == "D1":
+		uPeriod = PERIOD_DAY
+	default:
+		return errors.New("bad period"), nil
+	}
+
+	result := []entity.Record{}
 
 	n := 0
 
@@ -166,7 +210,7 @@ func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, c
 			c = count - n
 		}
 
-		err, data := this.api.GetMinuteData(security, uint16(offset + n), uint16(c))
+		err, data := this.api.GetPeriodData(security, uPeriod, uint16(offset + n), uint16(c))
 		if err != nil {
 			return err, nil
 		}
@@ -182,31 +226,12 @@ func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, c
 	return nil, result
 }
 
-func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []*Record) {
-	result := []*Record{}
+func (this *BizApi) GetLatestMinuteData(security *entity.Security, offset int, count int) (error, []entity.Record) {
+	return this.GetLatestPeriodData(security, PERIOD_M, offset, count)
+}
 
-	n := 0
-
-	for n < count {
-		c := 280
-		if c > count - n {
-			c = count - n
-		}
-
-		err, data := this.api.GetDayData(security, uint16(n), uint16(c))
-		if err != nil {
-			return err, nil
-		}
-
-		if len(data) == 0 {
-			break
-		}
-
-		result = append(data, result...)
-		n += len(data)
-	}
-
-	return nil, result
+func (this *BizApi) GetLatestDayData(security *entity.Security, count int) (error, []entity.Record) {
+	return this.GetLatestPeriodData(security, PERIOD_D, 0, count)
 }
 
 func (this *BizApi) DownloadFile(fileName string, outputDir string) error {
@@ -289,10 +314,12 @@ func (this *BizApi) GetNamesData(block uint16) (err error, namesData []byte) {
 	return
 }
 
-func (this *BizApi) DownloadNamesData(blocks []uint16, outputDir string) error {
+func (this *BizApi) DownloadNamesData(blocks []uint16) error {
 	if len(blocks) == 0 {
 		return nil
 	}
+
+	outputDir := filepath.Join(this.workDir, "T0002/hq_cache")
 
 	os.MkdirAll(outputDir, 0777)
 
@@ -309,8 +336,8 @@ func (this *BizApi) DownloadNamesData(blocks []uint16, outputDir string) error {
 	return nil
 }
 
-func (this *BizApi) DownloadAStockNamesData(outputDir string) error {
-	return this.DownloadNamesData([]uint16{0, 1}, outputDir)
+func (this *BizApi) DownloadAStockNamesData() error {
+	return this.DownloadNamesData([]uint16{0, 1})
 }
 
 func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
@@ -390,4 +417,17 @@ func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Perio
 	}
 
 	return nil
+}
+
+func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period Period) error {
+	ds := tdxdatasource.NewDataSource(this.workDir, true)
+	err, r := ds.GetLastRecord(security, period)
+	var startDate, endDate uint32
+	if err == nil {
+		r.Date += date.DAY_MILLISECONDS
+		startDate = uint32(date.GetDateDay(r.Date))
+	}
+
+	fmt.Println(startDate, endDate)
+	return this.DownloadPeriodHisData(security, period, startDate, endDate)
 }
