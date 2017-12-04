@@ -742,7 +742,7 @@ func (this *BidParser) Parse() (error, map[string]*Bid) {
 	return nil, result
 }
 
-func NewStockListParser(req Request, data []byte) *BidParser {
+func NewBidParser(req Request, data []byte) *BidParser {
 	return &BidParser{
 		RespParser: RespParser{
 			RawBuffer: data,

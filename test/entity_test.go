@@ -65,7 +65,7 @@ var _ = Describe("TestBidReq", func() {
 		err, buffer := network.ReadResp(conn)
 		chk(err)
 
-		parser := network.NewStockListParser(req, buffer)
+		parser := network.NewBidParser(req, buffer)
 		_, result := parser.Parse()
 		parser.TryParse()
 		fmt.Println(hex.EncodeToString(parser.Data))

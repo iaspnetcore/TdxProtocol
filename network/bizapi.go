@@ -110,22 +110,45 @@ func (this *BizApi) GetAStockCodes() (error, []string) {
 	return nil, result
 }
 
-func (this *BizApi) GetInfoEx(codes []*entity.Security) (error, map[string][]*InfoExItem) {
+func (this *BizApi) GetInfoEx(securities []*entity.Security) (error, map[string][]*InfoExItem) {
 	result := map[string][]*InfoExItem{}
 
 	n := 20
-	for i := 0; i < len(codes); i += n {
+	for i := 0; i < len(securities); i += n {
 		end := i + n
-		if end > len(codes) {
-			end = len(codes)
+		if end > len(securities) {
+			end = len(securities)
 		}
-		subCodes := codes[i:end]
+		subCodes := securities[i:end]
 		err, infoEx := this.api.GetInfoEx(subCodes)
 		if err != nil {
 			return err, nil
 		}
 
 		for k, v := range infoEx {
+			result[k] = v
+		}
+	}
+
+	return nil, result
+}
+
+func (this *BizApi) GetBid(securities []*entity.Security) (error, map[string]*Bid) {
+	result := map[string]*Bid{}
+
+	n := 20
+	for i := 0; i < len(securities); i += n {
+		end := i + n
+		if end > len(securities) {
+			end = len(securities)
+		}
+		subSecurities := securities[i:end]
+		err, bids := this.api.GetBid(subSecurities)
+		if err != nil {
+			return err, nil
+		}
+
+		for k, v := range bids {
 			result[k] = v
 		}
 	}

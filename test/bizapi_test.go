@@ -68,6 +68,36 @@ var _ = Describe("BizApiGetInfoEx", func () {
 	})
 })
 
+var _ = Describe("BizApiGetBids", func () {
+	It("test", func() {
+		fmt.Println("test GetBid...")
+		err, api := network.CreateBizApi(HOST_ONLY)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer api.Cleanup()
+
+		err, codes := api.GetSZStockCodes()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		securities := make([]*entity.Security, len(codes))
+		for i, code := range codes {
+			securities[i] = entity.ParseSecurityUnsafe(code)
+		}
+
+		start := time.Now().UnixNano()
+		_, result := api.GetBid(securities[:50])
+		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
+		for _, bid := range result {
+			fmt.Printf("%+v\n", bid)
+		}
+	})
+})
+
 var _ = Describe("BizApiGetInfoEx", func () {
 	It("test", func() {
 		fmt.Println("test GetInfoEx...")

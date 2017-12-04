@@ -161,6 +161,23 @@ func (this *API) GetFinance(securities []*entity.Security) (error, map[string]*F
 	return parser.Parse()
 }
 
+func (this *API) GetBid(securities []*entity.Security) (error, map[string]*Bid) {
+	req := NewBidReq(this.nextSeqId())
+	for _, security := range securities {
+		req.AddCode(security)
+	}
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, nil
+	}
+
+	parser := NewBidParser(req, respData)
+	return parser.Parse()
+}
+
 func (this *API) GetPeriodData(security *entity.Security, period, offset, count uint16) (error, []entity.Record) {
 	req := NewPeriodDataReq(this.nextSeqId(), security, period, offset, count)
 	buf := new(bytes.Buffer)
