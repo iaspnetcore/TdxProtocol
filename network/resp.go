@@ -393,7 +393,7 @@ func (this *RespParser) TryParse() {
 	}
 }
 
-func (this *InstantTransParser) Parse() (error, []*Transaction) {
+func (this *InstantTransParser) Parse() (error, []Transaction) {
 	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
 		return errors.New("incomplete data"), nil
 	}
@@ -408,15 +408,14 @@ func (this *InstantTransParser) Parse() (error, []*Transaction) {
 
 	this.uncompressIf()
 
-	var result []*Transaction
-
 	count := this.getUint16()
+	result := make([]Transaction, count)
 
 	first := true
 	var priceBase int
 
-	for ; count > 0; count-- {
-		trans := &Transaction{}
+	for i := 0; i < int(count); i++ {
+		trans := &result[i]
 		trans.Minute = this.getUint16()
 		if first {
 			priceBase = this.parseData2()
@@ -430,7 +429,6 @@ func (this *InstantTransParser) Parse() (error, []*Transaction) {
 		trans.Count = uint32(this.parseData2())
 		trans.BS = this.getByte()
 		this.skipByte(1)
-		result = append(result, trans)
 	}
 	return nil, result
 }
@@ -444,7 +442,7 @@ func NewInstantTransParser(req Request, data []byte) *InstantTransParser {
 	}
 }
 
-func (this *HisTransParser) Parse() (error, []*Transaction) {
+func (this *HisTransParser) Parse() (error, []Transaction) {
 	if int(this.getLen()) + this.getHeaderLen() > len(this.RawBuffer) {
 		return errors.New("incomplete data"), nil
 	}
@@ -459,16 +457,17 @@ func (this *HisTransParser) Parse() (error, []*Transaction) {
 
 	this.uncompressIf()
 
-	var result []*Transaction
-
 	count := this.getUint16()
 	this.skipByte(4)
+
+	result := make([]Transaction, count)
 
 	first := true
 	var priceBase int
 
-	for ; count > 0; count-- {
-		trans := &Transaction{Date: this.Req.(*HisTransReq).Date}
+	for i := 0; i < int(count); i++ {
+		trans := &result[i]
+		trans.Date = this.Req.(*HisTransReq).Date
 		trans.Minute = this.getUint16()
 		if first {
 			priceBase = this.parseData2()
@@ -481,7 +480,6 @@ func (this *HisTransParser) Parse() (error, []*Transaction) {
 		trans.Volume = uint32(this.parseData2())
 		trans.BS = this.getByte()
 		trans.Count = uint32(this.parseData2())
-		result = append(result, trans)
 	}
 	return nil, result
 }

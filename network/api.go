@@ -178,6 +178,34 @@ func (this *API) GetBid(securities []*entity.Security) (error, map[string]*Bid) 
 	return parser.Parse()
 }
 
+func (this *API) GetInstantTransaction(security *entity.Security, offset, count uint16) (error, []Transaction) {
+	req := NewInstantTransReq(this.nextSeqId(), security, offset, count)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, nil
+	}
+
+	parser := NewInstantTransParser(req, respData)
+	return parser.Parse()
+}
+
+func (this *API) GetHistoryTransaction(security *entity.Security, date uint32, offset, count uint16) (error, []Transaction) {
+	req := NewHisTransReq(this.nextSeqId(), date, security, offset, count)
+	buf := new(bytes.Buffer)
+	req.Write(buf)
+
+	err, respData := this.sendReq(buf.Bytes())
+	if err != nil {
+		return err, nil
+	}
+
+	parser := NewHisTransParser(req, respData)
+	return parser.Parse()
+}
+
 func (this *API) GetPeriodData(security *entity.Security, period, offset, count uint16) (error, []entity.Record) {
 	req := NewPeriodDataReq(this.nextSeqId(), security, period, offset, count)
 	buf := new(bytes.Buffer)
