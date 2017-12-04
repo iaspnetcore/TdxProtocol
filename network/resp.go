@@ -95,6 +95,7 @@ type Bid struct {
 	Low uint32
 
 	Vol uint32
+	Amount float32
 	InnerVol uint32
 	OuterVol uint32
 
@@ -711,14 +712,11 @@ func (this *BidParser) Parse() (error, map[string]*Bid) {
 		bid.High = uint32(this.parseData() + int(bid.Close))
 		bid.Low = uint32(this.parseData() + int(bid.Close))
 
-		this.parseData()
-		this.parseData()
-		this.parseData()
-		this.parseData()
+		this.skipByte(5)
 
 		bid.Vol = uint32(this.parseData2())
 		this.parseData2()
-		this.skipByte(4)
+		bid.Amount = this.getFloat32()
 		bid.InnerVol = uint32(this.parseData2())
 		bid.OuterVol = uint32(this.parseData2())
 

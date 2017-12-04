@@ -40,8 +40,8 @@ var _ = Describe("TestBidReq", func() {
 	BuildBidBuffer := func () (*bytes.Buffer, *network.BidReq) {
 		req := network.NewBidReq(1)
 		req.AddCode(entity.ParseSecurityUnsafe("000001.SZ"))
-		req.AddCode(entity.ParseSecurityUnsafe("000002.SZ"))
-		req.AddCode(entity.ParseSecurityUnsafe("999999.SH"))
+		//req.AddCode(entity.ParseSecurityUnsafe("000002.SZ"))
+		//req.AddCode(entity.ParseSecurityUnsafe("999999.SH"))
 		buf := new(bytes.Buffer)
 		req.Write(buf)
 		return buf, req
@@ -67,6 +67,7 @@ var _ = Describe("TestBidReq", func() {
 
 		parser := network.NewStockListParser(req, buffer)
 		_, result := parser.Parse()
+		parser.TryParse()
 		fmt.Println(hex.EncodeToString(parser.Data))
 
 		fmt.Println("total:", parser.Total, " got:", len(result))
