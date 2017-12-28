@@ -156,6 +156,14 @@ func (this *BizApi) GetBid(securities []*entity.Security) (error, map[string]*Bi
 	return nil, result
 }
 
+func (this *BizApi) GetInstantTransaction(security *entity.Security, offset, count uint16) (error, []Transaction) {
+	return this.api.GetInstantTransaction(security, offset, count)
+}
+
+func (this *BizApi) GetHistoryTransaction(security *entity.Security, date uint32, offset, count uint16) (error, []Transaction) {
+	return this.api.GetHistoryTransaction(security, date, offset, count)
+}
+
 func (this *BizApi) DownloadInfoEx() error {
 	err, codes := this.GetAStockCodes()
 	if err != nil {
