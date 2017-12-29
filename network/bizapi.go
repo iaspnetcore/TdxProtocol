@@ -371,83 +371,114 @@ func (this *BizApi) DownloadAStockNamesData() error {
 	return this.DownloadNamesData([]uint16{0, 1})
 }
 
-func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
-	if startDate == 0 {
-		startDate = 19900101
-	}
+func (this BizApi) DownloadPeriodHisDataAsync(security *entity.Security, period Period, startDate, endDate uint32) (chan<- bool, <-chan error) {
+	cancelCh := make(chan bool, 1) // 避免阻塞
+	retCh := make(chan error)
 
-	if endDate == 0 {
-		endDate = uint32(date.GetTodayInt())
-	}
+	go func() {
+		if startDate == 0 {
+			startDate = 19900101
+		}
 
-	// Calculate all days for segmentation
-	startTs := tdxdatasource.DayDateToTimestamp(startDate)
-	endTs := tdxdatasource.DayDateToTimestamp(endDate)
-	const dayMillis = 24 * 60 * 60 * 1000
-	nDays := (endTs - startTs) / dayMillis + 1
-	days := make([]uint32, nDays)
-	for i, ts := 0, startTs; ts <= endTs; i, ts = i+1, ts+dayMillis {
-		days[i] = tdxdatasource.TimestampToDayDate(ts)
-	}
+		if endDate == 0 {
+			endDate = uint32(date.GetTodayInt())
+		}
 
-	var step int
-	var uPeriod uint16
-	pName := period.ShortName()
-	switch {
-	case pName == "M1":
-		step = 1
-		uPeriod = PERIOD_MINUTE
-	case pName == "M5":
-		step = 1
-		uPeriod = PERIOD_MINUTE5
-	case pName == "D1":
-		step = 100
-		uPeriod = PERIOD_DAY
-	default:
-		return errors.New("bad period")
-	}
+		// Calculate all days for segmentation
+		startTs := tdxdatasource.DayDateToTimestamp(startDate)
+		endTs := tdxdatasource.DayDateToTimestamp(endDate)
+		if startTs > endTs {
+			retCh <- nil
+			close(retCh)
+			return
+		}
+		const dayMillis = 24 * 60 * 60 * 1000
+		nDays := (endTs - startTs) / dayMillis + 1
 
-	var getPacket = func(from, to uint32) (err error, data []byte) {
-		retryTimes := 0
-		for retryTimes < 3 {
-			err, data = this.api.GetPeriodHisData(security, uPeriod, from, to)
-			if err == nil {
-				return
+		days := make([]uint32, nDays)
+		for i, ts := 0, startTs; ts <= endTs; i, ts = i+1, ts+dayMillis {
+			days[i] = tdxdatasource.TimestampToDayDate(ts)
+		}
+
+		var step int
+		var uPeriod uint16
+		pName := period.ShortName()
+		switch {
+		case pName == "M1":
+			step = 1
+			uPeriod = PERIOD_MINUTE
+		case pName == "M5":
+			step = 1
+			uPeriod = PERIOD_MINUTE5
+		case pName == "D1":
+			step = 100
+			uPeriod = PERIOD_DAY
+		default:
+			retCh <- errors.New("bad period")
+			return
+		}
+
+		var getPacket = func(from, to uint32) (err error, data []byte) {
+			retryTimes := 0
+			for retryTimes < 3 {
+				err, data = this.api.GetPeriodHisData(security, uPeriod, from, to)
+				if err == nil {
+					return
+				}
+				time.Sleep(time.Millisecond * 500)
+				retryTimes++
 			}
-			time.Sleep(time.Millisecond * 500)
-			retryTimes++
-		}
-		return
-	}
-
-	// Get data now
-	ds := tdxdatasource.NewDataSource(this.workDir, true)
-
-	for i := 0; i < len(days); i += step {
-		from := days[i]
-		var to uint32
-		if i + step > len(days) {
-			to = endDate
-		} else {
-			to = days[i + step - 1]
+			return
 		}
 
-		err, data := getPacket(from, to)
-		if err != nil {
-			return err
-		}
+		// Get data now
+		ds := tdxdatasource.NewDataSource(this.workDir, true)
 
-		if len(data) == 0 {
-			continue
-		}
+		loop:
+		for i := 0; i < len(days); i += step {
+			select {
+			case <- cancelCh:
+				break loop
+			default:
+				break
+			}
 
-		err = ds.AppendRawData(security, period, data)
-		if err != nil {
-			return err
-		}
-	}
+			from := days[i]
+			var to uint32
+			if i + step > len(days) {
+				to = endDate
+			} else {
+				to = days[i + step - 1]
+			}
 
-	return nil
+			err, data := getPacket(from, to)
+			if err != nil {
+				retCh <- err
+				goto ret
+			}
+
+			if len(data) == 0 {
+				continue
+			}
+
+			err = ds.AppendRawData(security, period, data)
+			if err != nil {
+				retCh <- err
+				goto ret
+			}
+		}
+		retCh <- nil
+		ret:
+		close(retCh)
+	}()
+
+	return cancelCh, retCh
+}
+
+func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
+	cancelCh, retCh := this.DownloadPeriodHisDataAsync(security, period, startDate, endDate)
+	close(cancelCh)
+	return <- retCh
 }
 
 func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period Period) error {
@@ -459,6 +490,17 @@ func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period
 		startDate = uint32(date.GetDateDay(r.Date))
 	}
 
-	fmt.Println(startDate, endDate)
 	return this.DownloadPeriodHisData(security, period, startDate, endDate)
+}
+
+func (this BizApi) DownloadLatestPeriodHisDataAsync(security *entity.Security, period Period, startDate uint32) (chan<- bool, <-chan error) {
+	ds := tdxdatasource.NewDataSource(this.workDir, true)
+	err, r := ds.GetLastRecord(security, period)
+	var endDate uint32
+	if err == nil {
+		r.Date += date.DAY_MILLISECONDS
+		startDate = uint32(date.GetDateDay(r.Date))
+	}
+
+	return this.DownloadPeriodHisDataAsync(security, period, startDate, endDate)
 }
