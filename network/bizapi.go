@@ -477,8 +477,9 @@ func (this BizApi) DownloadPeriodHisDataAsync(security *entity.Security, period 
 
 func (this BizApi) DownloadPeriodHisData(security *entity.Security, period Period, startDate, endDate uint32) error {
 	cancelCh, retCh := this.DownloadPeriodHisDataAsync(security, period, startDate, endDate)
+	err := <- retCh
 	close(cancelCh)
-	return <- retCh
+	return err
 }
 
 func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period Period) error {
