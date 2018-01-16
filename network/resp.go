@@ -703,7 +703,7 @@ func (this *BidParser) Parse() (error, map[string]*Bid) {
 		bid.OuterVol = uint32(this.parseData2())
 
 		this.skipByte(1)
-		this.parseData()
+		this.parseData2()
 
 		bid.BuyPrice1 = uint32(this.parseData() + int(bid.Close))
 		bid.SellPrice1 = uint32(this.parseData() + int(bid.Close))
