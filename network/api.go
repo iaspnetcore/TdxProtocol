@@ -206,7 +206,9 @@ func (this *API) GetBid(securities []*entity.Security) (error, map[string]*Bid) 
 	}
 
 	if this.logFile != nil {
+		this.lock.Lock()
 		this.logFile.Write([]byte(hex.EncodeToString(respData) + "\n\n"))
+		this.lock.Unlock()
 	}
 
 	parser := NewBidParser(req, respData)
