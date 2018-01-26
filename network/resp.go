@@ -188,7 +188,7 @@ type GetFileDataParser struct {
 	Req Request
 }
 
-func (this *RespParser) getCmd() uint16 {
+func (this *RespParser) GetCmd() uint16 {
 	return binary.LittleEndian.Uint16(this.RawBuffer[10:12])
 }
 
@@ -204,7 +204,7 @@ func (this *RespParser) getLen1() uint16 {
 	return binary.LittleEndian.Uint16(this.RawBuffer[14:16])
 }
 
-func (this *RespParser) getSeqId() uint32 {
+func (this *RespParser) GetSeqId() uint32 {
 	return binary.LittleEndian.Uint32(this.RawBuffer[5:9])
 }
 
@@ -398,11 +398,11 @@ func (this *InstantTransParser) Parse() (error, []Transaction) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -447,11 +447,11 @@ func (this *HisTransParser) Parse() (error, []Transaction) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -498,11 +498,11 @@ func (this *InfoExParser) Parse() (error, map[string][]*InfoExItem) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -573,12 +573,12 @@ func (this *FinanceParser) Parse() (err error, finances map[string]*Finance) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -665,11 +665,11 @@ func (this *BidParser) Parse() (error, map[string]*Bid) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -763,11 +763,11 @@ func (this *PeriodDataParser) Parse() (error, []entity.Record) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -819,11 +819,11 @@ func (this *PeriodHisDataParser) Parse() (error, []byte) {
 		return errors.New("incomplete data"), nil
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		return errors.New("bad seq id"), nil
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		return errors.New("bad cmd"), nil
 	}
 
@@ -847,12 +847,12 @@ func (this *GetFileLenParser) Parse() (err error, length uint32) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -879,12 +879,12 @@ func (this *GetFileDataParser) Parse() (err error, length uint32, data []byte) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -912,12 +912,12 @@ func (this *NamesParser) Parse() (err error, length uint16, data []byte) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
@@ -945,12 +945,12 @@ func (this *NamesLenParser) Parse() (err error, length uint32) {
 		return
 	}
 
-	if this.getSeqId() != this.Req.GetSeqId() {
+	if this.GetSeqId() != this.Req.GetSeqId() {
 		err = errors.New("bad seq id")
 		return
 	}
 
-	if this.getCmd() != this.Req.GetCmd() {
+	if this.GetCmd() != this.Req.GetCmd() {
 		err = errors.New("bad cmd")
 		return
 	}
