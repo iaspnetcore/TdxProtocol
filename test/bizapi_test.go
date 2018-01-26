@@ -78,7 +78,9 @@ var _ = Describe("BizApiGetBids", func () {
 		}
 		defer api.Cleanup()
 
-		err, codes := api.GetSZStockCodes()
+		api.SetLogEnabled(true)
+
+		err, codes := api.GetAStockCodes()
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -90,10 +92,14 @@ var _ = Describe("BizApiGetBids", func () {
 		}
 
 		start := time.Now().UnixNano()
-		_, result := api.GetBid(securities[:50])
+		_, result := api.GetBid(securities[:])
 		fmt.Println("got:", len(result), "time cost:", (time.Now().UnixNano() - start) / 1000000, "ms")
-		for _, bid := range result {
-			fmt.Printf("%+v\n", bid)
+		for _, code := range codes {
+			bid, ok := result[code]
+			if !ok {
+				continue
+			}
+			fmt.Println(bid.StockCode, bid.BuyPrice1, bid.SellPrice1)
 		}
 	})
 })

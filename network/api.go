@@ -8,9 +8,14 @@ import (
 	"time"
 	"encoding/hex"
 	"github.com/stephenlyu/tds/entity"
+	"os"
+	"fmt"
 )
 
 type API struct {
+	logEnabled 		bool
+	logFile			*os.File
+
 	seqId			uint32
 	lock    		sync.Mutex
 
@@ -26,6 +31,27 @@ func CreateAPI(host string) (error, *API) {
 	}
 
 	return nil, api
+}
+
+func (this *API) SetLogEnabled(logEnabled bool) {
+	if this.logEnabled == logEnabled {
+		return
+	}
+
+	this.logEnabled = logEnabled
+
+	if this.logEnabled {
+		var err error
+		this.logFile, err = os.Create("raw.dat")
+		if err != nil {
+			fmt.Printf("[API] Open log file fail, error: %+v\n", err)
+		}
+	} else {
+		if this.logFile != nil {
+			this.logFile.Close()
+			this.logFile = nil
+		}
+	}
 }
 
 func (this *API) SetTimeOut(timeout int) {
@@ -82,6 +108,11 @@ func (this *API) Cleanup() error {
 	if this.pool != nil {
 		this.pool.Close()
 		this.pool = nil
+	}
+
+	if this.logFile != nil {
+		this.logFile.Close()
+		this.logFile = nil
 	}
 	return nil
 }
@@ -172,6 +203,10 @@ func (this *API) GetBid(securities []*entity.Security) (error, map[string]*Bid) 
 	err, respData := this.sendReq(buf.Bytes())
 	if err != nil {
 		return err, nil
+	}
+
+	if this.logFile != nil {
+		this.logFile.Write([]byte(hex.EncodeToString(respData) + "\n\n"))
 	}
 
 	parser := NewBidParser(req, respData)

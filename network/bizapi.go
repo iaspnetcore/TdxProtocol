@@ -46,6 +46,10 @@ func (this *BizApi) Cleanup() {
 	}
 }
 
+func (this *BizApi) SetLogEnabled(logEnabled bool) {
+	this.api.SetLogEnabled(logEnabled)
+}
+
 func (this *BizApi) SetTimeOut(timeout int) {
 	this.api.SetTimeOut(timeout)
 }
