@@ -46,6 +46,8 @@ func parseLog(filePath string) {
 		if line == "" {
 			continue
 		}
+		fmt.Println("")
+		fmt.Println(line)
 		parseBid(line)
 	}
 }
