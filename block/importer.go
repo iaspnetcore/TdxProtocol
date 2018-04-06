@@ -8,13 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 func RandString() string {
-	source := random.NewSource()
-	source.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%X", source.Int63())
+	return fmt.Sprintf("%X", random.Rand.Int63())
 }
 
 func unpad_zero(s []byte) []byte {
@@ -69,7 +66,6 @@ func LoadBlockCfg(file_path string) (error, []map[string]string) {
 
 func fileExist(file_path string) bool {
 	_, err := os.Stat(file_path)
-	fmt.Println(file_path, err)
 	if os.IsNotExist(err) {
 		return false
 	}
@@ -82,7 +78,6 @@ func SaveBlockCfg(file_path string, cfg []map[string]string) error {
 		if fileExist(bkFile) {
 			os.Remove(bkFile)
 		}
-		fmt.Println(file_path, bkFile)
 		os.Rename(file_path, bkFile)
 	}
 
