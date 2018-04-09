@@ -498,10 +498,9 @@ func (this BizApi) DownloadLatestPeriodHisData(security *entity.Security, period
 	return this.DownloadPeriodHisData(security, period, startDate, endDate)
 }
 
-func (this BizApi) DownloadLatestPeriodHisDataAsync(security *entity.Security, period Period, startDate uint32) (chan<- bool, <-chan error) {
+func (this BizApi) DownloadLatestPeriodHisDataAsync(security *entity.Security, period Period, startDate, endDate uint32) (chan<- bool, <-chan error) {
 	ds := tdxdatasource.NewDataSource(this.workDir, true)
 	err, r := ds.GetLastRecord(security, period)
-	var endDate uint32
 	if err == nil {
 		r.Date += date.DAY_MILLISECONDS
 		startDate = uint32(date.GetDateDay(r.Date))
