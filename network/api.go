@@ -125,7 +125,7 @@ func (this *API) nextSeqId() uint32 {
 }
 
 func (this *API) markConnUnusable(conn interface{}) {
-	if poolConn, ok := conn.(pool.PoolConn); ok {
+	if poolConn, ok := conn.(*pool.PoolConn); ok {
 		poolConn.MarkUnusable()
 	}
 }
