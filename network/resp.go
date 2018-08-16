@@ -785,21 +785,22 @@ func (this *PeriodDataParser) Parse() (error, []entity.Record) {
 		record := &result[i]
 		record.Date = tdxdatasource.DateToTimestamp(period, this.getUint32())
 
+		var open int
 		if first {
 			priceBase = this.parseData2()
-			record.Open = int32(priceBase)
+			open = priceBase
 			first = false
 		} else {
-			record.Open = int32(this.parseData() + priceBase)
+			open = this.parseData() + priceBase
 		}
+		record.Open = float64(open) / 1000.0
 
-		record.Close = int32(this.parseData() + int(record.Open))
-		record.High = int32(this.parseData() + int(record.Open))
-		record.Low = int32(this.parseData() + int(record.Open))
-		record.Volume = this.getFloat32()
-		record.Amount = this.getFloat32()
-
-		priceBase = int(record.Close)
+		priceBase = this.parseData() + int(record.Open)
+		record.Close = float64(priceBase) / 1000
+		record.High = float64(this.parseData() + int(record.Open)) / 1000
+		record.Low = float64(this.parseData() + int(record.Open)) / 1000
+		record.Volume = float64(this.getFloat32())
+		record.Amount = float64(this.getFloat32())
 	}
 
 	return nil, result
