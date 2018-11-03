@@ -1014,12 +1014,10 @@ func ReadRespN(conn net.Conn, buffer []byte) (error, []byte) {
 
 	for nRead < len(buffer) {
 		n, err := conn.Read(buffer[nRead:])
-		fmt.Printf("read: %d\n", n)
 		if err != nil {
 			return err, nil
 		}
 		nRead += n
-		fmt.Printf("nRead:", nRead)
 	}
 
 	return nil, buffer[:nRead]
